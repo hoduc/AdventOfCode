@@ -53,29 +53,45 @@ import (
     "fmt"
     "strconv"
     _ "embed"
+    "container/heap"
     "github.com/hoduc/AdventOfCode/AdventOfCode2022/util"
 )
 
 //go:embed day1.txt
-var s string
+var day1txt string
 
-func maxTotalCalories() int {
-    maxCalories, totalCalories := 0, 0
+func totalCalories() *util.MaxIntHeap {
+    h := &util.MaxIntHeap{[]int{}}
+    heap.Init(h)
+    totalCalories := 0
     onLine := func(line string) {
         if len(line) <= 0 {
-            if totalCalories > maxCalories {
-                maxCalories = totalCalories
-            }
+            heap.Push(h, totalCalories)
             totalCalories = 0
         } else {
             i, _ := strconv.Atoi(line)
             totalCalories += i
         }
     }
-    util.ReadLinesEmbed(s, onLine)
-    return maxCalories
+    util.ReadLinesEmbed(day1txt, onLine)
+    return h
 }
 
+func part1(totalCalories *util.MaxIntHeap) int {
+    return heap.Pop(totalCalories).(int)
+}
+
+func part2(sum, top int, totalCalories *util.MaxIntHeap) int {
+    for i := 0; i < top; i++ {
+        sum += heap.Pop(totalCalories).(int)
+    }
+    return sum
+}
+
+
 func main() {
-    fmt.Print(maxTotalCalories());
+    tCals := totalCalories()
+    cals := part1(tCals)
+    fmt.Printf("part1: %v\n", cals)
+    fmt.Printf("part2: %v\n", part2(cals, 2, tCals))
 }
