@@ -39,6 +39,19 @@
 
 // In how many assignment pairs does one range fully contain the other?
 
+// --- Part Two ---
+// It seems like there is still quite a bit of duplicate work planned. Instead, the Elves would like to know the number of pairs that overlap at all.
+
+// In the above example, the first two pairs (2-4,6-8 and 2-3,4-5) don't overlap, while the remaining four pairs (5-7,7-9, 2-8,3-7, 6-6,4-6, and 2-6,4-8) do overlap:
+
+// 5-7,7-9 overlaps in a single section, 7.
+// 2-8,3-7 overlaps all of the sections 3 through 7.
+// 6-6,4-6 overlaps in a single section, 6.
+// 2-6,4-8 overlaps in sections 4, 5, and 6.
+// So, in this example, the number of overlapping assignment pairs is 4.
+
+// In how many assignment pairs do the ranges overlap?
+
 package main
 import(
     "fmt"
@@ -60,6 +73,46 @@ func fullyContains(f, t, of, ot int) bool {
     return pairContains(f, t, of, ot) || pairContains(of, ot, f, t)
 }
 
+func fullyContainsInt(f, t, of, ot int) int {
+    if fullyContains(f, t, of, ot) {
+        return 1
+    }
+    return 0
+}
+
+func overLap(f, t, of, ot int) int {
+    if f >= of {
+        if t <= ot {
+            if t == f {
+                return t - f + 1
+            }
+            return t - f
+        }
+        return ot - f
+    } else if t >= of {
+        if t == of {
+            return t - of + 1
+        } else if t < ot {
+            return t - of
+        }
+        return ot - of
+    }
+    return 0
+}
+
+func overLaps(f, t, of, ot int) int {
+    ret := overLap(f, t, of, ot)
+    if ret <= 0 {
+        ret = overLap(of, ot, f, t)
+    } else {
+        return 1
+    }
+    if ret <= 0 {
+        return 0
+    }
+    return 1
+}
+
 func inputToPair(input string) (int, int, error){
     dash_splits := strings.Split(input, "-")
     // fmt.Println("dash_splits:", dash_splits)
@@ -77,7 +130,9 @@ func inputToPair(input string) (int, int, error){
 //go:embed day4.txt
 var day4txt string
 
-func part1() int {
+type countFn func(f, t, of, ot int) int
+
+func readPair(inc countFn) int {
     count := 0
     onLine := func(line string) error {
         if len(line) > 0 {
@@ -90,9 +145,7 @@ func part1() int {
             if err != nil {
                 return err
             }
-            if fullyContains(f, t, of, ot) {
-                count += 1
-            }
+            count += inc(f, t, of, ot)
             // fmt.Println("comma_splits:", comma_splits, count)
         }
         return nil
@@ -103,6 +156,16 @@ func part1() int {
     return count
 }
 
+func part1() int {
+    return readPair(fullyContainsInt)
+}
+
+func part2() int {
+    return readPair(overLaps)
+}
+
+
 func main() {
     fmt.Println("part1:", part1())
+    fmt.Println("part2:", part2())
 }
