@@ -7,7 +7,7 @@ import (
     "strings"
 )
 
-type onlineFn func(string)
+type onlineFn func(string) error
 
 func ReadLines(fileName string, onLine onlineFn) error {
     f, err := os.OpenFile(fileName, os.O_RDONLY, os.ModePerm)
@@ -21,7 +21,10 @@ func ReadLines(fileName string, onLine onlineFn) error {
     scanner := bufio.NewScanner(f)
     for scanner.Scan() {
         line := scanner.Text()
-        onLine(line)
+        if err := onLine(line); err != nil {
+            log.Fatalf("onLine failed on [%v]", err)
+            return err
+        }
     }
 
     if err := scanner.Err(); err != nil {
@@ -32,10 +35,14 @@ func ReadLines(fileName string, onLine onlineFn) error {
     return nil
 }
 
-func ReadLinesEmbed(lines string, onLine onlineFn) {
+func ReadLinesEmbed(lines string, onLine onlineFn) error {
     scanner := bufio.NewScanner(strings.NewReader(lines))
     for scanner.Scan() {
         line := scanner.Text()
-        onLine(line)
+        if err := onLine(line); err != nil {
+            log.Fatalf("onLine failed on [%v]", err)
+            return err
+        }
     }
+    return nil
 }

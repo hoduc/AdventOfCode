@@ -64,7 +64,7 @@ func totalCalories() *util.MaxIntHeap {
     h := &util.MaxIntHeap{[]int{}}
     heap.Init(h)
     totalCalories := 0
-    onLine := func(line string) {
+    onLine := func(line string) error {
         if len(line) <= 0 {
             heap.Push(h, totalCalories)
             totalCalories = 0
@@ -72,6 +72,7 @@ func totalCalories() *util.MaxIntHeap {
             i, _ := strconv.Atoi(line)
             totalCalories += i
         }
+        return nil
     }
     util.ReadLinesEmbed(day1txt, onLine)
     return h
@@ -93,5 +94,5 @@ func main() {
     tCals := totalCalories()
     cals := part1(tCals)
     fmt.Printf("part1: %v\n", cals)
-    fmt.Printf("part2: %v\n", part2(cals, 2, tCals))
+    fmt.Printf("part2: %v", part2(cals, 2, tCals))
 }
