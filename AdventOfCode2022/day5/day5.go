@@ -49,6 +49,50 @@
 
 // After the rearrangement procedure completes, what crate ends up on top of each stack?
 
+// --- Part Two ---
+// As you watch the crane operator expertly rearrange the crates, you notice the process isn't following your prediction.
+
+// Some mud was covering the writing on the side of the crane, and you quickly wipe it away. The crane isn't a CrateMover 9000 - it's a CrateMover 9001.
+
+// The CrateMover 9001 is notable for many new and exciting features: air conditioning, leather seats, an extra cup holder, and the ability to pick up and move multiple crates at once.
+
+// Again considering the example above, the crates begin in the same configuration:
+
+//     [D]
+// [N] [C]
+// [Z] [M] [P]
+//  1   2   3
+// Moving a single crate from stack 2 to stack 1 behaves the same as before:
+
+// [D]
+// [N] [C]
+// [Z] [M] [P]
+//  1   2   3
+// However, the action of moving three crates from stack 1 to stack 3 means that those three moved crates stay in the same order, resulting in this new configuration:
+
+//         [D]
+//         [N]
+//     [C] [Z]
+//     [M] [P]
+//  1   2   3
+// Next, as both crates are moved from stack 2 to stack 1, they retain their order as well:
+
+//         [D]
+//         [N]
+// [C]     [Z]
+// [M]     [P]
+//  1   2   3
+// Finally, a single crate is still moved from stack 1 to stack 2, but now it's crate C that gets moved:
+
+//         [D]
+//         [N]
+//         [Z]
+// [M] [C] [P]
+//  1   2   3
+// In this example, the CrateMover 9001 has put the crates in a totally different order: MCD.
+
+// Before the rearrangement process finishes, update your simulation so that the Elves know where they should stand to be ready to unload the final supplies. After the rearrangement procedure completes, what crate ends up on top of each stack?
+
 package main
 
 import(
@@ -59,32 +103,36 @@ import(
     "github.com/hoduc/AdventOfCode/AdventOfCode2022/util"
 )
 
-func inputToStacksOrMove(line string, stacks []string) error {
+type moveFn func(int, int, int, []string)
+
+func inputToStacksOrMove(line string, stacks []string, moveFunc moveFn) error {
     if line[1] == byte('1'){
         return nil
     } else if line[0] == byte('m') {
-        return move(line, stacks)
+        return move(line, stacks, moveFunc)
     } else {
 
         for i := 0;  i < len(line); i += 4 {
-            fmt.Println(i, "hello:", string(line[i]))
+            // fmt.Println(i, "hello:", string(line[i]))
             if line[i] == byte('[') {
-                fmt.Println("YSSSS:", i / 4)
+                // fmt.Println("YSSSS:", i / 4)
                 stacks[i / 4] += string(line[i+1:i+2])
             }
         }
     }
-    fmt.Println("==>", stacks)
+    // fmt.Println("==>", stacks)
     return nil
 }
 
-func move(line string, stacks []string) error {
-    fmt.Println("line:", line)
+
+
+func move(line string, stacks []string, moveFunc moveFn) error {
+    // fmt.Println("line:", line)
     splits := strings.Split(line, " ")
-    fmt.Println("splits:", splits[1], splits[3], splits[5])
+    // fmt.Println("splits:", splits[1], splits[3], splits[5])
     amt, err := strconv.Atoi(splits[1])
     if err != nil {
-        fmt.Println("1")
+        // fmt.Println("1")
         return err
     }
     from, err := strconv.Atoi(splits[3])
@@ -95,36 +143,48 @@ func move(line string, stacks []string) error {
     if err != nil {
         return err
     }
-    fmt.Println(amt, from, to)
+    // fmt.Println(amt, from, to)
     from -= 1
     to -= 1
-    fmt.Println("from:", stacks[from])
-    fmt.Println("to:", stacks[to])
-    for i := 0; i < amt && len(stacks[from]) > 0; i++ {
-        top := stacks[from][0]
-        fmt.Println("top:", string(top))
-        stacks[from] = stacks[from][1:]
-        stacks[to] = string(top) + stacks[to]
-    }
-    fmt.Println("=>", stacks)
+    // fmt.Println("from:", stacks[from])
+    // fmt.Println("to:", stacks[to])
+    moveFunc(amt, from, to, stacks)
+    // fmt.Println("=>", stacks)
+    // fmt.Println("-------")
     return nil
 }
 
 
+func moveFnPart1(amt, from, to int, stacks []string){
+    for i := 0; i < amt && len(stacks[from]) > 0; i++ {
+        top := stacks[from][0]
+        // fmt.Println("top:", string(top))
+        stacks[from] = stacks[from][1:]
+        stacks[to] = string(top) + stacks[to]
+    }
+}
+
+func moveFnPart2(amt, from, to int, stacks []string){
+    tops := stacks[from][:amt]
+    // fmt.Println("tops:", tops)
+    stacks[to] = tops + stacks[to]
+    stacks[from] = stacks[from][amt:]
+}
+
 //go:embed day5.txt
 var day5txt string
 
-func part1() string {
+func moveCrates(moveFunc moveFn) string {
     var stacks []string
     onLine := func(line string) error {
         // fmt.Println("this-line:", line)
         if len(line) > 0 {
             if len(stacks) == 0 {
                 cap := len(strings.Split(line, " ")) / 3
-                fmt.Println("cap:", cap)
+                // fmt.Println("cap:", cap)
                 stacks = make([]string, cap)
             }
-            if err := inputToStacksOrMove(line, stacks); err != nil {
+            if err := inputToStacksOrMove(line, stacks, moveFunc); err != nil {
                 return err
 
             }
@@ -135,7 +195,7 @@ func part1() string {
     if err := util.ReadLinesEmbed(day5txt, onLine); err != nil {
         return ""
     }
-    fmt.Println(stacks)
+    // fmt.Println(stacks)
     topStacks := ""
     for _, s := range stacks {
         topStacks += string(s[0])
@@ -144,6 +204,8 @@ func part1() string {
 }
 
 
+
 func main() {
-    fmt.Println("part1:", part1())
+    fmt.Println("part1:", moveCrates(moveFnPart1))
+    fmt.Println("part2:", moveCrates(moveFnPart2))
 }
