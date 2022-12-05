@@ -1,0 +1,46 @@
+hello:    
+hello: [D]
+hello:    
+==> [ D ]
+hello: [N]
+hello: [C]
+hello:    
+==> [N DC ]
+hello: [Z]
+hello: [M]
+hello: [P]
+==> [NZ DCM P]
+current-stack: [NZ DCM P]
+line: move 1 from 2 to 1
+splits: 1 2 1
+1 2 1
+from: DCM
+to: NZ
+top: D
+=> [DNZ CM P]
+line: move 3 from 1 to 3
+splits: 3 1 3
+3 1 3
+from: DNZ
+to: P
+top: D
+top: N
+top: Z
+=> [ CM ZNDP]
+line: move 2 from 2 to 1
+splits: 2 2 1
+2 2 1
+from: CM
+to: 
+top: C
+top: M
+=> [MC  ZNDP]
+line: move 1 from 1 to 2
+splits: 1 1 2
+1 1 2
+from: MC
+to: 
+top: M
+=> [C M ZNDP]
+[C M ZNDP]
+part1: CMZ
