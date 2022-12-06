@@ -1,0 +1,28 @@
+package main
+
+import(
+    "fmt"
+    _ "embed"
+    "github.com/hoduc/AdventOfCode/AdventOfCode2022/util"
+)
+
+//go:embed day{{.Day}}_sample.txt
+var day{{.Day}}txt string
+
+func read() int { // CHANGEME
+    onLine := func(line string) error {
+        if len(line) > 0 {
+	   // do something when line is not empty
+        }
+        return nil
+    }
+
+    if err := util.ReadLinesEmbed(day{{.Day}}txt, onLine); err != nil {
+        return -1 // CHANGEME
+    }
+    return 1 // CHANGEME
+}
+
+func main() {
+     fmt.Println("Welcome to day{{.Day}}")
+}
