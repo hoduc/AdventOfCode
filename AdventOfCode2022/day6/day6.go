@@ -28,6 +28,20 @@
 // zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw: first marker after character 11
 // How many characters need to be processed before the first start-of-packet marker is detected?
 
+// --- Part Two ---
+// Your device's communication system is correctly detecting packets, but still isn't working. It looks like it also needs to look for messages.
+
+// A start-of-message marker is just like a start-of-packet marker, except it consists of 14 distinct characters rather than 4.
+
+// Here are the first positions of start-of-message markers for all of the above examples:
+
+// mjqjpqmgbljsphdztnvjfqwrcgsmlb: first marker after character 19
+// bvwbjplbgvbhsrlpgdmjqwftvncz: first marker after character 23
+// nppdvjthqldpwncqszvftbrmjlhg: first marker after character 23
+// nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg: first marker after character 29
+// zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw: first marker after character 26
+// How many characters need to be processed before the first start-of-message marker is detected?
+
 
 package main
 
@@ -43,10 +57,10 @@ var day6txt string
 
 type processFn func(string) int
 
-func part1(line string) int {
+func marker(line string, distinctChar int) int {
     f := map[rune]int{}
     for i, r := range line {
-        if len(f) == 4 {
+        if len(f) == distinctChar {
             return i + 1
         }
         if ri, ok := f[r]; ok == true {
@@ -59,7 +73,7 @@ func part1(line string) int {
         }
 
         f[r] = i
-        if len(f) == 4 {
+        if len(f) == distinctChar {
             return i + 1
         }
     }
@@ -71,11 +85,11 @@ type Message struct {
     marker int
 }
 
-func readDataStreamBuffer(process processFn) []Message {
+func readDataStreamBuffer(distinctChar int) []Message {
     messages := []Message{}
     onLine := func(line string) error {
         if len(line) > 0 {
-            messages = append(messages, Message{ signal: line , marker : process(line) })
+            messages = append(messages, Message{ signal: line , marker : marker(line, distinctChar) })
         }
         return nil
     }
@@ -87,5 +101,6 @@ func readDataStreamBuffer(process processFn) []Message {
 }
 
 func main() {
-    fmt.Println("--part1--\n", readDataStreamBuffer(part1))
+    fmt.Println("--part1--\n", readDataStreamBuffer(4))
+    fmt.Println("--part2--\n", readDataStreamBuffer(14))
 }
