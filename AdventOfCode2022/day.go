@@ -107,7 +107,7 @@ func main() {
         }
         log.Println("SUCCESS!!")
 
-        goWorkDay := "use ./" + day
+        goWorkDay := "\nuse ./" + day + "\n"
         log.Printf("updating go.work with [%v]\n", goWorkDay)
         goWorkFile, err := os.OpenFile("go.work", os.O_APPEND | os.O_WRONLY, 0644)
         if err != nil {
