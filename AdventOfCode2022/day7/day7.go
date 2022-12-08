@@ -73,6 +73,23 @@
 
 // Find all of the directories with a total size of at most 100000. What is the sum of the total sizes of those directories?
 
+// --- Part Two ---
+// Now, you're ready to choose a directory to delete.
+
+// The total disk space available to the filesystem is 70000000. To run the update, you need unused space of at least 30000000. You need to find a directory you can delete that will free up enough space to run the update.
+
+// In the example above, the total size of the outermost directory (and thus the total amount of used space) is 48381165; this means that the size of the unused space must currently be 21618835, which isn't quite the 30000000 required by the update. Therefore, the update still requires a directory with total size of at least 8381165 to be deleted before it can run.
+
+// To achieve this, you have the following options:
+
+// Delete directory e, which would increase unused space by 584.
+// Delete directory a, which would increase unused space by 94853.
+// Delete directory d, which would increase unused space by 24933642.
+// Delete directory /, which would increase unused space by 48381165.
+// Directories e and a are both too small; deleting them would not free up enough space. However, directories d and / are both big enough! Between these, choose the smallest: d, increasing unused space by 24933642.
+
+// Find the smallest directory that, if deleted, would free up enough space on the filesystem to run the update. What is the total size of that directory?
+
 package main
 
 import(
@@ -98,21 +115,29 @@ type Node struct {
     children map[string]*Node
 }
 
+// TODO: not really need isDir
 func isDir(current *Node) bool{
     return len(current.children) > 0
 }
 
-func dfs(current *Node, count *int, cap int) {
+type Stat struct {
+    sz int
+    helper int
+}
+
+type onDirFn func(*Node, *Stat)
+
+type newStatFn func(*Node) Stat
+
+func dfs(current *Node, stat *Stat, onDir onDirFn) {
     if current != nil {
         // fmt.Println(current.id, current.sz, &current, &current.parent)
         if isDir(current) {
             // fmt.Println(current.id, current.sz)
-            if current.sz <= cap {
-                *count += current.sz
-            }
+            onDir(current, stat)
         }
         for _, child := range current.children {
-            dfs(child, count, cap)
+            dfs(child, stat, onDir)
         }
     }
 }
@@ -128,6 +153,8 @@ func cd(root, current *Node, dest string) (*Node, error) {
     if dest == "/" {
         return root, nil
     }
+    // TODO: write abt this mistake
+    // i can also have nested directory of the same name too
     // if current.id == dest {
     //     return current, nil
     // }
@@ -174,7 +201,7 @@ func current_children(current *Node) string {
     return children
 }
 
-func browse() int {
+func browse(newStat newStatFn, onDir onDirFn) int {
     lineNo := 1
     command := UNKNOWN
     root := &Node{id: "/", sz: 0, parent: nil, children: make(map[string]*Node)}
@@ -220,11 +247,33 @@ func browse() int {
     fmt.Println("---Finished-reading!!!")
     fmt.Println(root)
     fmt.Println("--------")
-    count := 0
-    dfs(root, &count, 100000)
-    return count
+    stat := newStat(root)
+    dfs(root, &stat, onDir)
+    return stat.sz
+}
+
+func part1NewStat(dir *Node) Stat {
+    return Stat{sz: 0, helper: 0}
+}
+
+
+func part1(dir *Node, stat *Stat) {
+    if dir.sz <= 100000 {
+        stat.sz += dir.sz
+    }
+}
+
+func part2NewStat(dir *Node) Stat {
+    return Stat{sz: dir.sz, helper: 30000000 - (70000000 - dir.sz)}
+}
+
+func part2(dir *Node, stat *Stat) {
+    if dir.sz >= stat.helper && dir.sz < stat.sz {
+        stat.sz = dir.sz
+    }
 }
 
 func main() {
-    fmt.Println("part1:", browse())
+    fmt.Println("part1:", browse(part1NewStat, part1))
+    fmt.Println("part2:", browse(part2NewStat, part2))
 }
