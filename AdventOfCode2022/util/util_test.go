@@ -51,3 +51,35 @@ func TestMaxFloatAGtB(t *testing.T) {
         t.Fatalf(`expected %v but got %v`, expected, actual)
     }
 }
+
+func TestAbsPositiveInt(t *testing.T) {
+    expected := 2
+    actual := Abs(2)
+    if actual != expected {
+        t.Fatalf(`expected %v but got %v`, expected, actual)
+    }
+}
+
+func TestAbsNegativeInt(t *testing.T) {
+    expected := 2
+    actual := Abs(-2)
+    if actual != expected {
+        t.Fatalf(`expected %v but got %v`, expected, actual)
+    }
+}
+
+func TestAbsPositiveFloat(t *testing.T) {
+    expected := 2.0
+    actual := Abs(2.0)
+    if actual != expected {
+        t.Fatalf(`expected %v but got %v`, expected, actual)
+    }
+}
+
+func TestAbsNegativeFloat(t *testing.T) {
+    expected := 2.0
+    actual := Abs(-2.0)
+    if actual != expected {
+        t.Fatalf(`expected %v but got %v`, expected, actual)
+    }
+}

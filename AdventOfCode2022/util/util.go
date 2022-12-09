@@ -71,3 +71,26 @@ func MaxInt(a, b int64) int64 {
     }
     return a
 }
+
+func Abs(x interface{}) interface {}{
+    switch x.(type) {
+    case int:
+        return int(AbsInt(int64(x.(int))))
+    case int32:
+        return int32(AbsInt(int64(x.(int32))))
+    case int64:
+        return AbsInt(x.(int64))
+    case float32:
+        return float32(math.Abs(float64(x.(float32))))
+    case float64:
+        return math.Abs(x.(float64))
+    }
+    return nil
+}
+
+func AbsInt(x int64) int64 {
+    if (x < 0) {
+        return -x
+    }
+    return x
+}
