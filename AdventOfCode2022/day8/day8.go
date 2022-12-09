@@ -27,6 +27,41 @@
 
 // Consider your map; how many trees are visible from outside the grid?
 
+// --- Part Two ---
+// Content with the amount of tree cover available, the Elves just need to know the best spot to build their tree house: they would like to be able to see a lot of trees.
+
+// To measure the viewing distance from a given tree, look up, down, left, and right from that tree; stop if you reach an edge or at the first tree that is the same height or taller than the tree under consideration. (If a tree is right on the edge, at least one of its viewing distances will be zero.)
+
+// The Elves don't care about distant trees taller than those found by the rules above; the proposed tree house has large eaves to keep it dry, so they wouldn't be able to see higher than the tree house anyway.
+
+// In the example above, consider the middle 5 in the second row:
+
+// 30373
+// 25512
+// 65332
+// 33549
+// 35390
+// Looking up, its view is not blocked; it can see 1 tree (of height 3).
+// Looking left, its view is blocked immediately; it can see only 1 tree (of height 5, right next to it).
+// Looking right, its view is not blocked; it can see 2 trees.
+// Looking down, its view is blocked eventually; it can see 2 trees (one of height 3, then the tree of height 5 that blocks its view).
+// A tree's scenic score is found by multiplying together its viewing distance in each of the four directions. For this tree, this is 4 (found by multiplying 1 * 1 * 2 * 2).
+
+// However, you can do even better: consider the tree of height 5 in the middle of the fourth row:
+
+// 30373
+// 25512
+// 65332
+// 33549
+// 35390
+// Looking up, its view is blocked at 2 trees (by another tree with a height of 5).
+// Looking left, its view is not blocked; it can see 2 trees.
+// Looking down, its view is also not blocked; it can see 1 tree.
+// Looking right, its view is blocked at 2 trees (by a massive tree of height 9).
+// This tree's scenic score is 8 (2 * 2 * 1 * 2); this is the ideal spot for the tree house.
+
+// Consider each tree on your map. What is the highest scenic score possible for any tree?
+
 package main
 
 import(
@@ -36,16 +71,21 @@ import(
 )
 
 
+
 //go:embed day8.txt
 var day8txt string
 
-func treeTop() int {
+type onPreTreeFn func(int, int) int
+type onTreeFn func([]int, int, int, int, int, int) int
+
+
+func treeTop(onPreTree onPreTreeFn, onTree onTreeFn) int {
     trees := []int{}
     R := 0
     C := 0
 
     onLine := func(line string) error {
-        fmt.Println(R, line)
+        // fmt.Println(R, line)
         if C == 0 {
             C = len(line)
         }
@@ -63,70 +103,123 @@ func treeTop() int {
         return -1
     }
 
-    visibleTrees := 0
-
+    res := onPreTree(R, C)
     for i := 1; i < R - 1; i++ {
         for j := 1; j < C - 1; j++ {
-            h := trees[i*C + j]
-            fmt.Printf("---(%v, %v) %v\n", i, j, h)
-            // left
-            k := j - 1
-            for k >= 0 && trees[i*C + k] < h {
-                k -= 1
-            }
-            if k < 0 {
-                visibleTrees += 1
-                fmt.Println("left")
-                continue
-            }
-            // right
-            k = j + 1
-            for k < C && trees[i*C + k] < h {
-                k += 1
-            }
-
-            if k >= C {
-                visibleTrees += 1
-                fmt.Println("right")
-                continue
-            }
-
-            // up
-            k = i - 1
-            for k >= 0 && trees[k*C + j] < h {
-                k -= 1
-            }
-            if k < 0 {
-                visibleTrees += 1
-                fmt.Println("up")
-                continue
-            }
-
-            // down
-            k = i + 1
-            for k < R && trees[k*C + j] < h {
-                k += 1
-            }
-            if k >= R {
-                visibleTrees += 1
-                fmt.Println("down")
-                continue
-            }
-            fmt.Printf("[x]\n")
-            fmt.Println("---")
-
+            res = onTree(trees, i, j, R, C, res)
         }
     }
-    edges := C*2 + (R-2)*2
-    fmt.Println("dimension:", R,C)
-    fmt.Println("edges:", edges)
-    fmt.Println("visibletTress:", visibleTrees)
-    fmt.Println("trees:", trees, len(trees))
-    return edges + visibleTrees
+
+    return res
+}
+
+
+func onPreTreePart1(R, C int) int {
+    return C*2 + (R-2)*2
+}
+
+func onTreePart1(trees []int, i, j, R, C, res int) int{
+    h := trees[i*C + j]
+
+    // fmt.Printf("---(%v, %v) %v\n", i, j, h)
+    // left
+    k := j - 1
+    for k >= 0 && trees[i*C + k] < h {
+        k -= 1
+    }
+    if k < 0 {
+        return res + 1
+    }
+    // right
+    k = j + 1
+    for k < C && trees[i*C + k] < h {
+        k += 1
+    }
+
+    if k >= C {
+        return res + 1
+    }
+
+    // up
+    k = i - 1
+    for k >= 0 && trees[k*C + j] < h {
+        k -= 1
+    }
+    if k < 0 {
+        return res + 1
+    }
+
+    // down
+    k = i + 1
+    for k < R && trees[k*C + j] < h {
+        k += 1
+    }
+    if k >= R {
+        return res + 1
+    }
+    // fmt.Printf("[x]\n")
+    // fmt.Println("---")
+    return res
+}
+
+func onPreTreePart2(R, C int) int {
+    return 0
+}
+
+func onTreePart2(trees []int, i, j, R, C, res int) int{
+    h := trees[i*C + j]
+
+    // fmt.Printf("---(%v, %v) %v\n", i, j, h)
+    // left
+    k := j - 1
+    for k >= 0 && trees[i*C + k] < h {
+        k -= 1
+    }
+    left := j - k
+    if k < 0 {
+        left -= 1
+    }
+
+    // right
+    k = j + 1
+    for k < C && trees[i*C + k] < h {
+        k += 1
+    }
+    right := k - j
+    if k >= C {
+        right -= 1
+    }
+
+
+    // up
+    k = i - 1
+    for k >= 0 && trees[k*C + j] < h {
+        k -= 1
+    }
+
+    up := i - k
+    if k < 0 {
+        up -= 1
+    }
+
+    // down
+    k = i + 1
+    for k < R && trees[k*C + j] < h {
+        k += 1
+    }
+    down := k - i
+    if k >= R {
+        down -= 1
+    }
+    // fmt.Printf("[x]\n")
+    // fmt.Println("---")
+    // fmt.Printf("%v(%v, %v): [%v %v %v %v] => [%v]\n", h, i, j, left, right, up, down, left*right*up*down)
+    return util.Max(res, left*right*up*down).(int)
 }
 
 
 
 func main() {
-    fmt.Println("part1:", treeTop())
+    fmt.Println("part1:", treeTop(onPreTreePart1, onTreePart1))
+    fmt.Println("part2:", treeTop(onPreTreePart2, onTreePart2))
 }
