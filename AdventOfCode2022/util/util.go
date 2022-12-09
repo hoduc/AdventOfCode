@@ -5,6 +5,7 @@ import (
     "log"
     "bufio"
     "strings"
+    "math"
 )
 
 type onlineFn func(string) error
@@ -45,4 +46,28 @@ func ReadLinesEmbed(lines string, onLine onlineFn) error {
         }
     }
     return nil
+}
+
+// TODO: More type
+func Max(a, b interface{}) interface{} {
+    switch a.(type) {
+    case int:
+        return int(MaxInt(int64(a.(int)), int64(b.(int))))
+    case int32:
+        return int32(MaxInt(int64(a.(int32)), int64(b.(int32))))
+    case int64:
+        return MaxInt(a.(int64), b.(int64))
+    case float32:
+        return float32(math.Max(float64(a.(float32)), float64(b.(float32))))
+    case float64:
+        return math.Max(a.(float64), b.(float64))
+    }
+    return nil
+}
+
+func MaxInt(a, b int64) int64 {
+    if a < b {
+        return b
+    }
+    return a
 }

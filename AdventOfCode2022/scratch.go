@@ -30,11 +30,19 @@ func lineToStacks(line string, stacks []string) {
     }
 }
 
+func lineToRow(line string) []int {
+    row := []int{}
+    for _, e := range line {
+        row = append(row, int(e - '0'))
+    }
+    return row
+}
 func main() {
     // stacks := []string{}
     // lineToStacks("    [D]    ", stacks)
-    stacks := make([]string, 3)
-    stacks[0] += "abc"
-    stacks[1] += "def"
-    fmt.Println(stacks)
+    // stacks := make([]string, 3)
+    // stacks[0] += "abc"
+    // stacks[1] += "def"
+    // fmt.Println(stacks)
+    fmt.Println(lineToRow("123456"))
 }
