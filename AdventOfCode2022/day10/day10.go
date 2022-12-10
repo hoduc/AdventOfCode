@@ -187,6 +187,129 @@
 
 // Find the signal strength during the 20th, 60th, 100th, 140th, 180th, and 220th cycles. What is the sum of these six signal strengths?
 
+// --- Part Two ---
+// It seems like the X register controls the horizontal position of a sprite. Specifically, the sprite is 3 pixels wide, and the X register sets the horizontal position of the middle of that sprite. (In this system, there is no such thing as "vertical position": if the sprite's horizontal position puts its pixels where the CRT is currently drawing, then those pixels will be drawn.)
+
+// You count the pixels on the CRT: 40 wide and 6 high. This CRT screen draws the top row of pixels left-to-right, then the row below that, and so on. The left-most pixel in each row is in position 0, and the right-most pixel in each row is in position 39.
+
+// Like the CPU, the CRT is tied closely to the clock circuit: the CRT draws a single pixel during each cycle. Representing each pixel of the screen as a #, here are the cycles during which the first and last pixel in each row are drawn:
+
+// Cycle   1 -> ######################################## <- Cycle  40
+// Cycle  41 -> ######################################## <- Cycle  80
+// Cycle  81 -> ######################################## <- Cycle 120
+// Cycle 121 -> ######################################## <- Cycle 160
+// Cycle 161 -> ######################################## <- Cycle 200
+// Cycle 201 -> ######################################## <- Cycle 240
+// So, by carefully timing the CPU instructions and the CRT drawing operations, you should be able to determine whether the sprite is visible the instant each pixel is drawn. If the sprite is positioned such that one of its three pixels is the pixel currently being drawn, the screen produces a lit pixel (#); otherwise, the screen leaves the pixel dark (.).
+
+// The first few pixels from the larger example above are drawn as follows:
+
+// Sprite position: ###.....................................
+
+// Start cycle   1: begin executing addx 15
+// During cycle  1: CRT draws pixel in position 0
+// Current CRT row: #
+
+// During cycle  2: CRT draws pixel in position 1
+// Current CRT row: ##
+// End of cycle  2: finish executing addx 15 (Register X is now 16)
+// Sprite position: ...............###......................
+
+// Start cycle   3: begin executing addx -11
+// During cycle  3: CRT draws pixel in position 2
+// Current CRT row: ##.
+
+// During cycle  4: CRT draws pixel in position 3
+// Current CRT row: ##..
+// End of cycle  4: finish executing addx -11 (Register X is now 5)
+// Sprite position: ....###.................................
+
+// Start cycle   5: begin executing addx 6
+// During cycle  5: CRT draws pixel in position 4
+// Current CRT row: ##..#
+
+// During cycle  6: CRT draws pixel in position 5
+// Current CRT row: ##..##
+// End of cycle  6: finish executing addx 6 (Register X is now 11)
+// Sprite position: ..........###...........................
+
+// Start cycle   7: begin executing addx -3
+// During cycle  7: CRT draws pixel in position 6
+// Current CRT row: ##..##.
+
+// During cycle  8: CRT draws pixel in position 7
+// Current CRT row: ##..##..
+// End of cycle  8: finish executing addx -3 (Register X is now 8)
+// Sprite position: .......###..............................
+
+// Start cycle   9: begin executing addx 5
+// During cycle  9: CRT draws pixel in position 8
+// Current CRT row: ##..##..#
+
+// During cycle 10: CRT draws pixel in position 9
+// Current CRT row: ##..##..##
+// End of cycle 10: finish executing addx 5 (Register X is now 13)
+// Sprite position: ............###.........................
+
+// Start cycle  11: begin executing addx -1
+// During cycle 11: CRT draws pixel in position 10
+// Current CRT row: ##..##..##.
+
+// During cycle 12: CRT draws pixel in position 11
+// Current CRT row: ##..##..##..
+// End of cycle 12: finish executing addx -1 (Register X is now 12)
+// Sprite position: ...........###..........................
+
+// Start cycle  13: begin executing addx -8
+// During cycle 13: CRT draws pixel in position 12
+// Current CRT row: ##..##..##..#
+
+// During cycle 14: CRT draws pixel in position 13
+// Current CRT row: ##..##..##..##
+// End of cycle 14: finish executing addx -8 (Register X is now 4)
+// Sprite position: ...###..................................
+
+// Start cycle  15: begin executing addx 13
+// During cycle 15: CRT draws pixel in position 14
+// Current CRT row: ##..##..##..##.
+
+// During cycle 16: CRT draws pixel in position 15
+// Current CRT row: ##..##..##..##..
+// End of cycle 16: finish executing addx 13 (Register X is now 17)
+// Sprite position: ................###.....................
+
+// Start cycle  17: begin executing addx 4
+// During cycle 17: CRT draws pixel in position 16
+// Current CRT row: ##..##..##..##..#
+
+// During cycle 18: CRT draws pixel in position 17
+// Current CRT row: ##..##..##..##..##
+// End of cycle 18: finish executing addx 4 (Register X is now 21)
+// Sprite position: ....................###.................
+
+// Start cycle  19: begin executing noop
+// During cycle 19: CRT draws pixel in position 18
+// Current CRT row: ##..##..##..##..##.
+// End of cycle 19: finish executing noop
+
+// Start cycle  20: begin executing addx -1
+// During cycle 20: CRT draws pixel in position 19
+// Current CRT row: ##..##..##..##..##..
+
+// During cycle 21: CRT draws pixel in position 20
+// Current CRT row: ##..##..##..##..##..#
+// End of cycle 21: finish executing addx -1 (Register X is now 20)
+// Sprite position: ...................###..................
+// Allowing the program to run to completion causes the CRT to produce the following image:
+
+// ##..##..##..##..##..##..##..##..##..##..
+// ###...###...###...###...###...###...###.
+// ####....####....####....####....####....
+// #####.....#####.....#####.....#####.....
+// ######......######......######......####
+// #######.......#######.......#######.....
+// Render the image given by your program. What eight capital letters appear on your CRT?
+
 package main
 
 import(
@@ -201,54 +324,47 @@ import(
 //go:embed day10.txt
 var day10txt string
 
-func add(x, cycle, val int) (int, int, error) {
-    return x + val, cycle + 2, nil
-}
-
-func noop(x, cycle int) (int, int, error) {
-    return x, cycle + 1, nil
-}
-
-func exe(x, cycle int, line string) (int, int, error) {
+func opTimeExe(x int, line string) (int, int, error) {
     splits := strings.Split(line, " ")
     if splits[0] == "noop" {
-        return noop(x, cycle)
+        return 1, x, nil
     } else if splits[0] == "addx" {
         val, err := strconv.Atoi(splits[1])
         if err != nil {
             return -1, -1, err
         }
-        return add(x, cycle, val)
+        return 2, x + val, nil
     }
     return -1, -1, errors.New(fmt.Sprintf("Unknown op [%v]", splits[0]))
 }
 
-type onSignalFn func(int, int, int)
-type afterSignalFn func() int
+type onSignalFn func(int, int)
+type afterSignalFn func() string
 
-func signalProcessing(onSignal onSignalFn, afterSignal afterSignalFn) int {
+func signalProcessing(onSignal onSignalFn, afterSignal afterSignalFn) string {
     x := 1
-    px := 1
     cycle := 1
     onLine := func(line string) error {
         if len(line) > 0 {
             fmt.Println("instruction:", line, " | cycle:", cycle, "|x=", x)
-            onSignal(px, x, cycle)
-            n_x, n_cycle, err := exe(x, cycle, line)
+            // clock ticking while remaining the same value
+            opDuration, newX, err := opTimeExe(x, line)
             if err != nil {
                 return err
             }
-            px = x
-            x, cycle = n_x, n_cycle
+
+            for i := 0; i < opDuration; i += 1 {
+                onSignal(x, cycle)
+                cycle += 1
+            }
+            x = newX
         }
         return nil
     }
 
     if err := util.ReadLinesEmbed(day10txt, onLine); err != nil {
-        return -1
+        return "-1"
     }
-    onSignal(px, x, cycle)
-    fmt.Println("cycle:", cycle, "|x=", x)
     return afterSignal()
 }
 
@@ -260,27 +376,51 @@ func part1() (onSignalFn, afterSignalFn){
     cycles := []int{20, 60, 100, 140, 180, 220}
     ci := 0
     signalStrength := 0
-    return func(px, x, cycle int) {
+    return func(x, cycle int) {
         if ci >= len(cycles) {
             return
         }
         if cycle == cycles[ci] {
             signalStrength += cycles[ci] * x
-            fmt.Println("p1-eq:", px, x, cycle, cycles[ci], cycles[ci] * x, signalStrength)
-            ci += 1
-        } else if cycle > cycles[ci] {
-            signalStrength += cycles[ci] * px
-            fmt.Println("p1gt:", px, x, cycle, cycles[ci], cycles[ci] * px, signalStrength)
             ci += 1
         }
-    }, func() int {
-        fmt.Println("p1-b")
-        return signalStrength
+    }, func() string {
+        return strconv.Itoa(signalStrength)
+    }
+}
+
+func part2() (onSignalFn, afterSignalFn){
+    lineBreakCycles := []int{41, 81, 121, 161, 201}
+    lbci := 0
+    crt := ""
+    return func(x, cycle int) {
+        if lbci < len(lineBreakCycles) && cycle == lineBreakCycles[lbci] {
+            crt += "\n"
+            lbci += 1
+        }
+        pos := (cycle - 1) % 40
+        if pos >= x - 1 && pos <= x + 1 {
+            crt += "#"
+        } else {
+            crt += "."
+        }
+    }, func() string{
+        return crt
     }
 }
 
 
 
 func main() {
-    fmt.Println("part1:", signalProcessing(part1()))
+    fmt.Printf("part1---\n", signalProcessing(part1()))
+    fmt.Printf("part2---\n%v\n", signalProcessing(part2()))
+    // actual := signalProcessing(part2())
+//     expected := `##..##..##..##..##..##..##..##..##..##..
+// ###...###...###...###...###...###...###.
+// ####....####....####....####....####....
+// #####.....#####.....#####.....#####.....
+// ######......######......######......####
+// #######.......#######.......#######.....`
+//     fmt.Println("eq?:", expected == actual)
+
 }
