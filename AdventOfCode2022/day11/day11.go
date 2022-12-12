@@ -217,7 +217,6 @@ import(
     _ "embed"
     "strings"
     "strconv"
-    "container/heap"
     "github.com/hoduc/AdventOfCode/AdventOfCode2022/util"
 )
 
@@ -309,7 +308,10 @@ func parseTest(line string) (int, error) {
     return strconv.Atoi(splits[len(splits) - 1])
 }
 
-func inspect(monkeys []Monkey) {
+type onDividendsFn func([]int) int
+type reliefFn func(int, int) int
+
+func inspect(monkeys []Monkey, df int, relief reliefFn) {
     for i := 0 ; i < len(monkeys); i++ {
         // fmt.Println("==Monkey", i)
         for len(monkeys[i].items) > 0 {
@@ -317,7 +319,7 @@ func inspect(monkeys []Monkey) {
             item := monkeys[i].items[0]
             monkeys[i].items = monkeys[i].items[1:]
             // fmt.Println("worry1:", item)
-            item = monkeys[i].operation(item) / 3
+            item = relief(monkeys[i].operation(item), df)
             // fmt.Println("worry2:", item)
             // fmt.Println("other-monkey-index:", monkeys[i].test(item))
             otherMonkeyIndex := monkeys[i].test(item)
@@ -335,10 +337,22 @@ func inspect(monkeys []Monkey) {
 //go:embed day11.txt
 var day11txt string
 
-type afterRoundsFn func([]Monkey) int
+func monkeyBusiness(monkeys []Monkey) int {
+    biggest, bigger := 0, 0
+    for _, monkey := range monkeys {
+        if monkey.inspect > biggest {
+            bigger, biggest = biggest, monkey.inspect
+        } else if monkey.inspect > bigger {
+            bigger = monkey.inspect
+        }
+    }
 
-func predictMonkeysBall(round int, afterRounds afterRoundsFn) int {
+    return biggest * bigger
+}
+
+func predictMonkeysBall(round int, onDividends onDividendsFn, relief reliefFn, roundFilters []int) int {
     monkeys := []Monkey{}
+    dividends := []int{}
     var dividend int
     var monkeyIndexTrue int
     var monkeyIndexFalse int
@@ -366,6 +380,7 @@ func predictMonkeysBall(round int, afterRounds afterRoundsFn) int {
                 }
                 dividend = d
                 // fmt.Println("after:", ordinal)
+                dividends = append(dividends, dividend)
             } else if ordinal == 4 {
                 // fmt.Println("before:", ordinal)
                 i, err := parseTest(line)
@@ -402,29 +417,61 @@ func predictMonkeysBall(round int, afterRounds afterRoundsFn) int {
     fmt.Println("----------")
     fmt.Println(monkeys)
     fmt.Println("==== Start inspect")
+    df := onDividends(dividends)
+    fmt.Println("df:", df)
+    ri := 0
     for i := 0; i < round; i++ {
-        inspect(monkeys)
-        fmt.Println("--After round ", i + 1)
-        for j, monkey := range monkeys {
-            fmt.Println(j, monkey.items, monkey.inspect)
+        inspect(monkeys, df, relief)
+        if ri < len(roundFilters) && roundFilters[ri] == i + 1 {
+            fmt.Println("--After round ", i + 1)
+            for j, monkey := range monkeys {
+                fmt.Println(j, monkey.items, monkey.inspect)
+            }
+            ri += 1
         }
     }
 
-    return afterRounds(monkeys)
+    return monkeyBusiness(monkeys)
 }
 
-func part1(monkeys []Monkey) int {
-    activeMonkeys := &util.MaxIntHeap{[]int{}}
-    for _, monkey := range monkeys {
-        heap.Push(activeMonkeys, monkey.inspect)
-    }
-    monkeyBusiness := 1
-    for i := 0; i < 2; i++ {
-        monkeyBusiness *= heap.Pop(activeMonkeys).(int)
-    }
-    return monkeyBusiness
+
+func part1() (int, onDividendsFn, reliefFn, []int) {
+    return 20, func(dividends []int) int {
+        return 3
+    }, func(item int, df int) int {
+        return item / df
+    }, []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20}
 }
+
+func part2() (int, onDividendsFn, reliefFn, []int) {
+    return 10000, func(dividends []int) int {
+        // each monkey tests for a dividend that is prime number
+        // so if a monkey produce test divisibility of n
+        // and dividends are lets say 2, 3 (because it might transfer to other monkey)
+        // so n % 2 and n % 3 would not change the divisibility result
+        // For eg
+        // If n = 6 and 6 % 2 == 0 or 6 divides to 2
+        // The next monkey would ask for 3 with an addition of 4 or 10 % 3 != 0 also satisfy
+        // then the worry level should do n % 5 or n % (2*3) so the divisibility wont change as it transfers to the monkey throughout
+        // for this example: first test is divisable, second test is not
+        // n = 6 => 6 % 2 = 0, (6 + 4) = 10 % 3 != 0 or  relief function of part 2 does
+        // n = 6 % 6 = 0 (first), (0 + 4) = 4  % 6 = 4 % 3 != 0 (second)
+        // thus the reliefFn can be coded as item%productOfAllDividends
+        // because of the modulus properties, + or * also does not change the result
+        // since the number only ever increasing whereas the near the end digits the one contributes to visibility and the product of these primes produce the biggest near the ends range already, modding by them will keep these portions
+
+        prod := 1
+        for _, dividend := range dividends {
+            prod *= dividend
+        }
+        return prod
+    }, func(item int, df int) int {
+        return item % df
+    }, []int{1, 20, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000}
+}
+
 
 func main() {
-    fmt.Println("part1:", predictMonkeysBall(20, part1))
+    // fmt.Println("part1:", predictMonkeysBall(part1()))
+    fmt.Println("part2:", predictMonkeysBall(part2()))
 }
