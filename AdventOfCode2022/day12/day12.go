@@ -27,6 +27,29 @@
 
 // What is the fewest steps required to move from your current position to the location that should get the best signal?
 
+// --- Part Two ---
+// As you walk up the hill, you suspect that the Elves will want to turn this into a hiking trail. The beginning isn't very scenic, though; perhaps you can find a better starting point.
+
+// To maximize exercise while hiking, the trail should start as low as possible: elevation a. The goal is still the square marked E. However, the trail should still be direct, taking the fewest steps to reach its goal. So, you'll need to find the shortest path from any square at elevation a to the square marked E.
+
+// Again consider the example from above:
+
+// Sabqponm
+// abcryxxl
+// accszExk
+// acctuvwj
+// abdefghi
+// Now, there are six choices for starting position (five marked a, plus the square marked S that counts as being at elevation a). If you start at the bottom-left square, you can reach the goal most quickly:
+
+// ...v<<<<
+// ...vv<<^
+// ...v>E^^
+// .>v>>>^^
+// >^>>>>>^
+// This path reaches the goal in only 29 steps, the fewest possible.
+
+// What is the fewest steps required to move starting from any square with elevation a to the location that should get the best signal?
+
 
 package main
 
@@ -108,50 +131,13 @@ func drawPath(visited map[Location]bool, R, C int) {
     }
 }
 
-//go:embed day12.txt
-var day12txt string
-
-func hillClimb() int {
-    var start Location
-    var end Location
-    board := []rune{}
+func dijkstra(start, end Location, board []rune, R, C int) int {
     q := &util.PriorityQueue{
         Items: []*util.Item{},
         LessFn: func(pi, pj int) bool {
             return pi < pj
         },
     }
-    R := 0
-    C := 0
-    onLine := func(line string) error {
-        fmt.Println(R, line)
-        if C == 0 {
-            C = len(line)
-        }
-        if len(line) > 0 {
-            for i, c := range line {
-                v := c
-                if c == 'S' {
-                    v = 'a'
-                    start = Location{x: i, y: R, value: v}
-                } else if c == 'E' {
-                    v = 'z'
-                    end = Location{x: i, y: R, value: v}
-                }
-                board = append(board, v)
-            }
-        }
-        R += 1
-        return nil
-    }
-
-    if err := util.ReadLinesEmbed(day12txt, onLine); err != nil {
-        return -1
-    }
-    fmt.Println("start:", start)
-    fmt.Println("end:", end)
-    fmt.Println("R:", R)
-    fmt.Println("C:", C)
     visited := make(map[Location]bool)
     dist := make(map[Location]int)
     prev := make(map[Location]Location)
@@ -165,7 +151,7 @@ func hillClimb() int {
         }
         if location == end {
             // fmt.Println(q.Items)
-            drawPath(visited, R, C)
+            // drawPath(visited, R, C)
             // fmt.Println("start:", start)
             // fmt.Println("end:", end)
             // fmt.Println("prev:", prev, len(prev))
@@ -173,7 +159,7 @@ func hillClimb() int {
             return dist[end]
         }
         visited[location] = true
-        fmt.Println("visited:", location)
+        // fmt.Println("visited:", location)
         // left right
         // fmt.Println("left-right")
         addTo(q, board, R, C, visited, dist, prev, location, true)
@@ -187,6 +173,72 @@ func hillClimb() int {
     return -1
 }
 
+
+type isStartFn func(rune) bool
+//go:embed day12.txt
+var day12txt string
+
+func hillClimb(isStart isStartFn) int {
+    var start Location
+    var end Location
+    starts := []Location{}
+    minStepsToEnd := &util.IntHeap{}
+    heap.Init(minStepsToEnd)
+    board := []rune{}
+    R := 0
+    C := 0
+    onLine := func(line string) error {
+        fmt.Println(R, line)
+        if C == 0 {
+            C = len(line)
+        }
+        if len(line) > 0 {
+            for i, c := range line {
+                loc := Location{x: i, y: R, value: c}
+                if isStart(c){
+                    if loc.value != 'a' {
+                        loc.value = 'a'
+                    }
+                    start = loc
+                    starts = append(starts, start)
+                } else if c == 'E' {
+                    loc.value = 'z'
+                    end = loc
+                }
+                board = append(board, loc.value)
+            }
+        }
+        R += 1
+        return nil
+    }
+
+    if err := util.ReadLinesEmbed(day12txt, onLine); err != nil {
+        return -1
+    }
+    fmt.Println("start:", start)
+    fmt.Println("end:", end)
+    fmt.Println("R:", R)
+    fmt.Println("C:", C)
+    fmt.Println("starts:", starts)
+    for _, st := range starts {
+        ms := dijkstra(st, end, board, R, C)
+        fmt.Println(start, "=>", ms)
+        if ms != - 1 {
+            heap.Push(minStepsToEnd, ms)
+        }
+    }
+    return heap.Pop(minStepsToEnd).(int)
+}
+
+func part1(c rune) bool{
+    return c == 'S'
+}
+
+func part2(c rune) bool {
+    return c == 'S' || c == 'a'
+}
+
 func main() {
-    fmt.Println("part1:", hillClimb())
+    fmt.Println("part1:", hillClimb(part1))
+    fmt.Println("part2:", hillClimb(part2))
 }
