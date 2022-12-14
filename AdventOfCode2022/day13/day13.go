@@ -107,6 +107,39 @@
 
 // Determine which pairs of packets are already in the right order. What is the sum of the indices of those pairs?
 
+// --- Part Two ---
+// Now, you just need to put all of the packets in the right order. Disregard the blank lines in your list of received packets.
+
+// The distress signal protocol also requires that you include two additional divider packets:
+
+// [[2]]
+// [[6]]
+// Using the same rules as before, organize all packets - the ones in your list of received packets as well as the two divider packets - into the correct order.
+
+// For the example above, the result of putting the packets in the correct order is:
+
+// []
+// [[]]
+// [[[]]]
+// [1,1,3,1,1]
+// [1,1,5,1,1]
+// [[1],[2,3,4]]
+// [1,[2,[3,[4,[5,6,0]]]],8,9]
+// [1,[2,[3,[4,[5,6,7]]]],8,9]
+// [[1],4]
+// [[2]]
+// [3]
+// [[4,4],4,4]
+// [[4,4],4,4,4]
+// [[6]]
+// [7,7,7]
+// [7,7,7,7]
+// [[8,7,6]]
+// [9]
+// Afterward, locate the divider packets. To find the decoder key for this distress signal, you need to determine the indices of the two divider packets and multiply them together. (The first packet is at index 1, the second packet is at index 2, and so on.) In this example, the divider packets are 10th and 14th, and so the decoder key is 140.
+
+// Organize all of the packets into the correct order. What is the decoder key for the distress signal?
+
 package main
 
 import(
@@ -114,6 +147,7 @@ import(
     _ "embed"
     "strconv"
     "os"
+    "sort"
     "github.com/hoduc/AdventOfCode/AdventOfCode2022/util"
 )
 
@@ -123,7 +157,7 @@ func isList(exp string) bool {
 }
 
 func elems(exp string) []string {
-    fmt.Println("exp:", exp)
+    // fmt.Println("exp:", exp)
     l := []string{}
     level := 0
     j := 0
@@ -152,7 +186,7 @@ func stringToInt(s string) int {
 func stringCmp(left, right string) int {
     li := stringToInt(left)
     ri := stringToInt(right)
-    fmt.Println("print:", li, ri)
+    // fmt.Println("print:", li, ri)
     if li < ri {
         return -1
     } else if li > ri {
@@ -184,21 +218,20 @@ func cmp(left, right string) int {
        left = "[" + left + "]"
     }
     // both are list
-    fmt.Printf("d:%v(%v)|%v(%v)\n", left, len(left), right, len(right))
+    // fmt.Printf("d:%v(%v)|%v(%v)\n", left, len(left), right, len(right))
     l := elems(left[1:len(left)-1])
     r := elems(right[1:len(right)-1])
-    fmt.Printf("l:%v => len: %v\n", l, len(l))
-    fmt.Printf("r:%v => len: %v\n", r, len(r))
+    // fmt.Printf("l:%v => len: %v\n", l, len(l))
+    // fmt.Printf("r:%v => len: %v\n", r, len(r))
     for i := 0; i < len(l) && i < len(r); i++ {
-        fmt.Printf("elem-l:%v\n", l[i])
-        fmt.Printf("elem-r:%v\n", r[i])
+        // fmt.Printf("elem-l:%v\n", l[i])
+        // fmt.Printf("elem-r:%v\n", r[i])
         cmpResult := cmp(l[i], r[i])
         if cmpResult != 0 {
-            fmt.Println("got-back-result:", cmpResult)
+            // fmt.Println("got-back-result:", cmpResult)
             return cmpResult
         }
     }
-    fmt.Println("out-here!!!")
     if len(l) < len(r){
         return -1
     }
@@ -207,8 +240,6 @@ func cmp(left, right string) int {
     }
     return 0
 }
-//go:embed day13.txt
-var day13txt string
 
 
 func sum(l []int) int{
@@ -252,16 +283,20 @@ func writePairs(path string, pairs []int) {
     fmt.Println("==> done writing to file")
 }
 
-func readPairs() int {
-    rightOrderPairs := 0
+type onPairFn func(string, string, int)
+type afterInputFn func() int
+
+//go:embed day13.txt
+var day13txt string
+
+func readPairs(onPair onPairFn, afterInput afterInputFn) int {
+    // rightOrderPairs := 0
     pairNo := 1
     lineNo := 1
     leftLine := 1
     rightLine := 2
     left := ""
     right := ""
-    pairs := []int{}
-    results := []int{}
     onLine := func(line string) error {
         // fmt.Println(lineNo, line)
         if len(line) > 0 {
@@ -274,16 +309,7 @@ func readPairs() int {
             }
         } else {
             fmt.Printf(">> [Pair %v] Comparing\n%v\n and \n%v\n", pairNo, left, right)
-            cmpResult := cmp(left, right)
-            results = append(results, cmpResult)
-            if cmpResult < 0 {
-                fmt.Println("->", true)
-                pairs = append(pairs, pairNo)
-                rightOrderPairs += pairNo
-            } else {
-                fmt.Println("->", false)
-            }
-            fmt.Println("---------")
+            onPair(left, right, pairNo)
             pairNo += 1
             left = ""
             right = ""
@@ -298,26 +324,54 @@ func readPairs() int {
 
     if len(left) != 0 && len(right) != 0 {
         fmt.Printf(">> [Last] Comparing %v and %v\n", left, right)
-        cmpResult := cmp(left, right)
-        fmt.Println(cmpResult)
-        results = append(results, cmpResult)
-        fmt.Println("---------")
-        if cmpResult < 0 {
-            pairs = append(pairs, pairNo)
-            rightOrderPairs += pairNo
-            fmt.Println("->", true)
-        } else {
-            fmt.Println("->", false)
-        }
-        fmt.Println("---------")
+        onPair(left, right, pairNo)
         pairNo += 1
     }
-    fmt.Println("pairNo:", pairNo)
-    fmt.Println("sum:", sum(pairs))
-    // writePairs("C:/Users/Duc Ho/Desktop/Programming/AdventOfCode/AdventOfCode2022/day13/go.txt", results)
-    return rightOrderPairs
+    return afterInput()
+}
+
+func part1() (onPairFn, afterInputFn) {
+    rightOrderPairs := 0
+    return func(left, right string, pairNo int) {
+        if cmp(left, right) < 0 {
+            rightOrderPairs += pairNo
+        }
+    }, func() int {
+        return rightOrderPairs
+    }
+}
+
+
+func findPacket(packets []string, packet string) int {
+    for i, val := range packets {
+        if val == packet {
+            return i
+        }
+    }
+    return -1
+}
+
+func part2() (onPairFn, afterInputFn) {
+    packets := []string{}
+    return func(left, right string, pairNo int) {
+        packets = append(packets, []string{left, right}...)
+    }, func() int {
+        p1 := "[[2]]"
+        p2 := "[[6]]"
+        packets = append(packets, []string{p1, p2}...)
+        sort.SliceStable(packets, func(i, j int) bool {
+            return cmp(packets[i], packets[j]) < 0
+        })
+        fmt.Println(packets, len(packets))
+        p1i := findPacket(packets, p1) + 1
+        p2i := findPacket(packets, p2) + 1
+        fmt.Println("p1i:", p1i)
+        fmt.Println("p2i:", p2i)
+        return p1i * p2i
+    }
 }
 
 func main() {
-    fmt.Println("part1:", readPairs())
+    // fmt.Println("part1:", readPairs(part1()))
+    fmt.Println("part2:", readPairs(part2()))
 }
