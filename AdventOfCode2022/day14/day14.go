@@ -111,6 +111,42 @@
 // ~..........
 // ~..........
 // Using your scan, simulate the falling sand. How many units of sand come to rest before sand starts flowing into the abyss below?
+
+// --- Part Two ---
+// You realize you misread the scan. There isn't an endless void at the bottom of the scan - there's floor, and you're standing on it!
+
+// You don't have time to scan the floor, so assume the floor is an infinite horizontal line with a y coordinate equal to two plus the highest y coordinate of any point in your scan.
+
+// In the example above, the highest y coordinate of any point is 9, and so the floor is at y=11. (This is as if your scan contained one extra rock path like -infinity,11 -> infinity,11.) With the added floor, the example above now looks like this:
+
+//         ...........+........
+//         ....................
+//         ....................
+//         ....................
+//         .........#...##.....
+//         .........#...#......
+//         .......###...#......
+//         .............#......
+//         .............#......
+//         .....#########......
+//         ....................
+// <-- etc #################### etc -->
+// To find somewhere safe to stand, you'll need to simulate falling sand until a unit of sand comes to rest at 500,0, blocking the source entirely and stopping the flow of sand into the cave. In the example above, the situation finally looks like this after 93 units of sand come to rest:
+
+// ............o............
+// ...........ooo...........
+// ..........ooooo..........
+// .........ooooooo.........
+// ........oo#ooo##o........
+// .......ooo#ooo#ooo.......
+// ......oo###ooo#oooo......
+// .....oooo.oooo#ooooo.....
+// ....oooooooooo#oooooo....
+// ...ooo#########ooooooo...
+// ..ooooo.......ooooooooo..
+// #########################
+// Using your scan, simulate the falling sand until the source of the sand becomes blocked. How many units of sand come to rest?
+
 package main
 
 import(
@@ -147,10 +183,36 @@ func updateObstacles(obstacles map[Location]bool, locations []Location) {
     }
 }
 
+func renderSand(obstacles, restUnits map[Location]bool, startX, width, startY, height , floorY int) {
+    for y := startY; y < startY + height; y++ {
+        for x := startX; x < startX + width; x++ {
+            loc := Location{x: x, y: y}
+            if _, ok := obstacles[loc]; ok {
+                if _, ok := restUnits[loc]; ok {
+                    fmt.Print("o")
+                } else {
+                    fmt.Print("#")
+                }
+            } else {
+                if floorY != -1 && y == floorY {
+                    fmt.Print("#")
+                } else {
+                    fmt.Print(".")
+                }
+            }
+        }
+        fmt.Println()
+    }
+}
+
+type shouldStopFn func(Location, int) bool
+type onSandRestFn func(Location)
+type isBlockedFn func(map[Location]bool, Location, int) bool
+
 //go:embed day14.txt
 var day14txt string
 
-func read() int {
+func sandScan(onSandRest onSandRestFn, shouldStop shouldStopFn, isBlocked isBlockedFn) int {
     obstacles := make(map[Location]bool)
     onLine := func(line string) error {
         if len(line) > 0 {
@@ -176,7 +238,7 @@ func read() int {
     if err := util.ReadLinesEmbed(day14txt, onLine); err != nil {
         return -1
     }
-    fmt.Println(obstacles, len(obstacles))
+    // fmt.Println(obstacles, len(obstacles))
     maxY := 0
     for location, _ := range obstacles {
         if location.y > maxY {
@@ -184,50 +246,87 @@ func read() int {
         }
     }
 
-    restUnits := 0
+    restUnits := make(map[Location]bool)
     sand := Location{x: 500, y: 0}
     fmt.Println("maxY:", maxY)
-    for sand.y < maxY {
+    for !shouldStop(sand, maxY){
         // fmt.Println(sand)
+        nextLocations := []Location{
+            Location{x: sand.x, y: sand.y + 1},
+            Location{x: sand.x - 1, y: sand.y + 1},
+            Location{x: sand.x + 1, y: sand.y + 1},
+        }
         blocked := 0
-        // down blocked ?
-        if _, ok := obstacles[Location{x: sand.x, y: sand.y + 1}]; ok {
-            // fmt.Println("down-blocked!")
-            blocked += 1
-            // down-left blocked ?
-            if _, ok := obstacles[Location{x: sand.x - 1, y: sand.y + 1}]; ok {
-                // fmt.Println("down-left-blocked")
+        var nextLocation Location
+        for _, val := range nextLocations {
+            if isBlocked(obstacles, val, maxY) {
                 blocked += 1
-                if _, ok := obstacles[Location{x: sand.x + 1, y: sand.y + 1}]; ok {
-                    // fmt.Println("down-right-blocked")
-                    blocked += 1
-                } else {
-                    sand.x += 1
-                    sand.y += 1
-                }
             } else {
-                sand.x -= 1
-                sand.y += 1
+                nextLocation = val
+                break
             }
-        } else {
-            // fmt.Println("no-blocked")
-            sand.y += 1
         }
 
-        // try all three way
+        // all 3 ways blocked
         if blocked == 3 {
             // become rest
             // add to the obstacles map
-            obstacles[sand] = true
-            sand = Location{x: 500, y:0}
-            restUnits += 1
-            fmt.Println("restUnits:", restUnits)
-            continue
+            onSandRest(sand)
+            if _, ok := obstacles[sand]; !ok {
+                obstacles[sand] = true
+                restUnits[sand] = true
+                // fmt.Println("obstacles:", len(obstacles))
+                // fmt.Println("restUnits:", len(restUnits))
+                // renderSand(obstacles, restUnits, 485, 30, 0, 15, 11)
+                // fmt.Println("----")
+            }
+
+            sand = Location{x: 500, y: 0}
+        } else {
+            // one of the three ways not blocked
+            sand = nextLocation
         }
     }
-    return restUnits
+    // fmt.Println("obstacles:", len(obstacles))
+    // fmt.Println("restUnits:", len(restUnits))
+    return len(restUnits)
+}
+
+func isLocObstacle(loc Location, obstacles map[Location]bool) bool {
+    if _, ok := obstacles[loc]; ok {
+        return true
+    }
+    return false
+}
+
+func part1() (onSandRestFn, shouldStopFn, isBlockedFn) {
+    return func(sand Location) {
+    }, func(sand Location, maxY int) bool {
+        return sand.y >= maxY
+    }, func(obstacles map[Location]bool, nextLoc Location, maxY int) bool {
+        return isLocObstacle(nextLoc, obstacles)
+    }
+}
+
+func part2() (onSandRestFn, shouldStopFn, isBlockedFn) {
+    stopped := false
+    return func(sand Location) {
+        if sand.x == 500 && sand.y == 0 {
+            // fmt.Println("Hello-you-should-stop-here")
+            stopped = true
+        }
+    }, func(sand Location, maxY int) bool {
+        return stopped == true
+    }, func(obstacles map[Location]bool, nextLoc Location, maxY int) bool{
+        // maybe it is floor
+        if nextLoc.y == maxY + 2 {
+            return true
+        }
+        return isLocObstacle(nextLoc, obstacles)
+    }
 }
 
 func main() {
-    fmt.Println("part1:", read())
+    // fmt.Println("part1:", sandScan(part1()))
+    fmt.Println("part2:", sandScan(part2()))
 }

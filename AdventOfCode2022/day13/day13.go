@@ -372,6 +372,6 @@ func part2() (onPairFn, afterInputFn) {
 }
 
 func main() {
-    // fmt.Println("part1:", readPairs(part1()))
+    fmt.Println("part1:", readPairs(part1()))
     fmt.Println("part2:", readPairs(part2()))
 }
