@@ -6,6 +6,7 @@ import (
     "bufio"
     "strings"
     "math"
+    "errors"
 )
 
 type onlineFn func(string) error
@@ -44,6 +45,28 @@ func ReadLinesEmbed(lines string, onLine onlineFn) error {
             log.Fatalf("onLine failed on [%v]", err)
             return err
         }
+    }
+    return nil
+}
+
+func ReadLinesEmbedLineNumber(lines string, lineNumber int, onLine onlineFn) error {
+    log.Println("hello-there")
+    lineNo := 0
+    scanner := bufio.NewScanner(strings.NewReader(lines))
+    for scanner.Scan() {
+        line := scanner.Text()
+        if lineNo == lineNumber {
+            if err := onLine(line); err != nil {
+                log.Fatalf("onLine failed on [%v]", err)
+                return err
+            }
+            break
+        }
+        lineNo += 1
+    }
+    if lineNo < lineNumber {
+        log.Fatalf("Wrong lineNumber to read from file")
+        return errors.New("Wrong lineNumber to read from file")
     }
     return nil
 }

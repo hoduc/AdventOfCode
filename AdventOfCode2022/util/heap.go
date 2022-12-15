@@ -102,3 +102,7 @@ func (pq *PriorityQueue) update(item *Item, value any, priority int) {
 	item.Priority = priority
 	heap.Fix(pq, item.Index)
 }
+
+func PQPush(q *PriorityQueue, value any, priority int) {
+    heap.Push(q, &Item{Value: value, Priority: priority, Index: -1})
+}
