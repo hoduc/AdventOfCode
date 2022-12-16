@@ -191,22 +191,22 @@ func notOverlapped(a Interval, b Interval) bool {
     return a.start < b.start && a.end < b.start || b.start < a.start && b.end < a.start
 }
 
-func countIntervalsLengthAtRow(rows map[int][]Interval, row int) int {
+func sortIntervalsAtRow(rows map[int][]Interval, row int) []Interval{
     // get the []interval
     intervals := rows[row]
-    fmt.Println("Before:", intervals)
+    // fmt.Println("Before:", intervals)
     // sort them
     sort.Slice(intervals, func(i, j int) bool {
         return intervals[i].start < intervals[j].start
     })
-    fmt.Println("AfteR:", intervals)
+    // fmt.Println("AfteR:", intervals)
 
     // merge intervals
     newIntervals := []Interval{intervals[0]}
     intervals = intervals[1:]
     for len(intervals) > 0 {
         first, second := newIntervals[len(newIntervals)-1], intervals[0]
-        fmt.Println(first, second)
+        // fmt.Println(first, second)
         // fmt.Println(first.start, first.end)
         // fmt.Println(second.start, second.end)
         if notOverlapped(first, second) {
@@ -217,18 +217,10 @@ func countIntervalsLengthAtRow(rows map[int][]Interval, row int) int {
             newIntervals = append(newIntervals[:len(newIntervals)-1], mergeIntervals(first, second))
         }
         intervals = intervals[1:]
-        fmt.Println(newIntervals)
+        // fmt.Println(newIntervals)
     }
-    fmt.Println("after-merge:", newIntervals)
-    count := 0
-    for _, val := range newIntervals {
-        fmt.Println(val, val.end - val.start)
-        count += util.Abs(val.end - val.start).(int) + 1
-    }
-    // reassign to the row
     rows[row] = newIntervals
-    fmt.Println("count-before:", count)
-    return count
+    return rows[row]
 }
 
 func updateLocationsRows(rows map[int]int, loc Location) {
@@ -251,10 +243,10 @@ var day15txt string
 //go:embed day15_ext.txt
 var day15txtExt string
 
-func beaconSensor() int {
+type senseFn func (map[int]int, map[int]int, map[int][]Interval) int
+
+func beaconSensor(sense senseFn) int {
     lineNo := 0
-    sensors := []Location{}
-    beacons := []Location{}
     sensorsRows := make(map[int]int)
     beaconsRows := make(map[int]int)
     rows := make(map[int][]Interval)
@@ -266,8 +258,6 @@ func beaconSensor() int {
                 return err
             }
             fmt.Printf(">> Sensor [%v], Beacon [%v]\n", sensor, beacon)
-            sensors = append(sensors, sensor)
-            beacons = append(beacons, beacon)
             updateCoverage(rows, sensor, beacon)
             updateLocationsRows(sensorsRows, sensor)
             updateLocationsRows(beaconsRows, beacon)
@@ -281,6 +271,11 @@ func beaconSensor() int {
         return -1
     }
 
+    return sense(sensorsRows, beaconsRows, rows)
+}
+
+
+func part1(sensorsRows map[int]int, beaconsRows map[int]int, rows map[int][]Interval) int {
     inputRow := -1
     readInputRow := func(line string) error {
         if len(line) > 0 {
@@ -304,7 +299,14 @@ func beaconSensor() int {
         return -1
     }
 
-    countIntervalsRow := countIntervalsLengthAtRow(rows, inputRow)
+
+    // countIntervalsRow := countIntervalsLengthAtRow(rows, inputRow)
+    sortedIntervalsAtRow := sortIntervalsAtRow(rows, inputRow)
+    countIntervalsRow := 0
+    for _, val := range sortedIntervalsAtRow {
+        fmt.Println(val, val.end - val.start)
+        countIntervalsRow += util.Abs(val.end - val.start).(int) + 1
+    }
     beaconsRow := getLocationsRows(beaconsRows, inputRow)
     sensorsRow := getLocationsRows(sensorsRows, inputRow)
     fmt.Println("sensorsRows:", sensorsRows)
@@ -313,6 +315,28 @@ func beaconSensor() int {
     return  countIntervalsRow - beaconsRow - sensorsRow
 }
 
+func part2(sensorsRows map[int]int, beaconsRows map[int]int, rows map[int][]Interval) int {
+    f := -1
+    for y, _ := range rows {
+        sortedIntervalsAtRow := sortIntervalsAtRow(rows, y)
+        if len(sortedIntervalsAtRow) > 1 {
+            for i := 1; i < len(sortedIntervalsAtRow); i++ {
+                if sortedIntervalsAtRow[i].start - sortedIntervalsAtRow[i-1].end == 2 && y > 0{
+                    x := sortedIntervalsAtRow[i-1].end + 1
+                    if x < 0 || x > 4000000 || y < 0 || y > 4000000 {
+                        continue
+                    }
+                    f = x*4000000 + y
+                    fmt.Println("candidate:", x, y, f)
+                    break
+                }
+            }
+        }
+    }
+    return f
+}
+
 func main() {
-    fmt.Println("part1:", beaconSensor())
+    fmt.Println("part1:", beaconSensor(part1))
+    fmt.Println("part2:", beaconSensor(part2))
 }
