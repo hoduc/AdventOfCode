@@ -24,24 +24,76 @@ In this example, the calibration values of these four lines are 12, 38, 15, and 
 
 Consider your entire calibration document. What is the sum of all of the calibration values?
 
+--- Part Two ---
+
+Your calculation isn't quite right. It looks like some of the digits are actually spelled out with letters: one, two, three, four, five, six, seven, eight, and nine also count as valid "digits".
+
+Equipped with this new information, you now need to find the real first and last digit on each line. For example:
+
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+
+In this example, the calibration values are 29, 83, 13, 24, 42, 14, and 76. Adding these together produces 281.
+
+What is the sum of all of the calibration values?
+
 
 ]#
 
 import strutils
+import unittest
 
-proc day1(fileName: string): int =
+proc day1(fileName: string, numberOnly: bool = true): int =
     var calibrationTotal = 0
     for line in lines(fileName):
         var calibration = 0
         var digit = 0
-        for c in line:
-            if isDigit(c):
-                digit = int(c) - int('0')
-            if calibration == 0:
+        var i = 0
+        # echo "==="
+        while i < len(line):
+            var inc = 1
+            if isDigit(line[i]):
+                digit = int(line[i]) - int('0')
+            elif not numberOnly:
+                for j, s in @["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"].pairs:
+                    # 1 -> -1
+                    # 2 -> -1
+                    # 3 -> -1
+                    # 5 -> -1
+                    # 7 -> -1
+                    # 8 -> -1
+                    if i + len(s) - 1 < len(line) and line[i .. i + len(s) - 1] == s:
+                        inc = if (j + 1 in [1,2,3,5,7,8]): len(s) - 1 else: len(s)
+                        digit = j + 1
+                        break
+            # echo "digit:", digit    
+            if calibration == 0 and digit > 0:
                 calibration += digit * 10
+            # echo calibration
+            i += inc
         calibration += digit
+        # echo line, " | => :", calibration
         calibrationTotal += calibration
     return calibrationTotal
 
-echo(day1("day1_sample.txt"))
-echo(day1("day1_1.txt"))
+test "day1_sample.txt":
+    check day1("day1_sample.txt") == 142
+test "day1_1.txt":
+    check day1("day1_1.txt") == 55123
+test "day1_2_sample.txt":
+    check day1("day1_2_sample.txt", false) == 281
+test "day1_2_sample2.txt":
+    check day1("day1_2_sample2.txt", false) == 162
+test "day1_2_sample3.txt":
+    check day1("day1_2_sample3.txt", false) == 21
+test "day1_2_sample4.txt":
+    check day1("day1_2_sample4.txt", false) == 33
+test "day1_2_sample5.txt":
+    check day1("day1_2_sample5.txt", false) == 18
+test "day1_2.txt":
+    check day1("day1_2.txt", false) == 55260
