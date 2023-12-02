@@ -203,6 +203,27 @@
 
 // Simulate the Elves' process and find the smallest rectangle that contains the Elves after 10 rounds. How many empty ground tiles does that rectangle contain?
 
+// --- Part Two ---
+
+// It seems you're on the right track. Finish simulating the process and figure out where the Elves need to go. How many rounds did you save them?
+
+// In the example above, the first round where no Elf moved was round 20:
+
+// .......#......
+// ....#......#..
+// ..#.....#.....
+// ......#.......
+// ...#....#.#..#
+// #.............
+// ....#.....#...
+// ..#.....#.....
+// ....#.#....#..
+// .........#....
+// ....#......#..
+// .......#......
+
+// Figure out where the Elves need to go. What is the number of the first round where no Elf moves?
+
 package main
 
 import (
@@ -277,9 +298,7 @@ func updateAxisElfCount(axisElfCount map[int]int, axis, inc int) {
 	if _, ok := axisElfCount[axis]; !ok {
 		axisElfCount[axis] = 0
 	}
-	// fmt.Println("before-inner:", axisElfCount)
 	axisElfCount[axis] = axisElfCount[axis] + inc
-	// fmt.Println("after-inner:", axisElfCount)
 	if axisElfCount[axis] <= 0 {
 		delete(axisElfCount, axis)
 	}
@@ -315,12 +334,18 @@ func checkElvesEast(position Position, positions map[Position]bool, propositions
 	return checkElves(position, positions, propositions, e, ne, se)
 }
 
-func proposePosition(round int, checkElves []checkElvesFn, position Position, positions map[Position]bool, propositions map[Position][]Position) {
+func proposePosition(round int, checkElves []checkElvesFn, position Position, positions map[Position]bool, propositions map[Position][]Position) int {
+	if noElves(positions, position.n(), position.ne(), position.nw(), position.s(), position.se(), position.sw(), position.w(), position.e()) {
+		return 0
+	}
 	for i := round; i < round+4; i++ {
 		if checkElves[i%4](position, positions, propositions) {
-			break
+			// did move
+			return 1
 		}
 	}
+	// no elves all around, no move
+	return 0
 }
 
 func render(xMin, xMax, yMin, yMax int, positions map[Position]bool) {
@@ -336,10 +361,13 @@ func render(xMin, xMax, yMin, yMax int, positions map[Position]bool) {
 	}
 }
 
+type keepSimulatingFn func(int, int) bool
+type reportFn func(int, int, int, int, int, map[int]int) int
+
 //go:embed day23.txt
 var day23txt string
 
-func plantSeedlings(rounds int) int {
+func plantSeedlings(keepSimulating keepSimulatingFn, report reportFn) int {
 	positions := make(map[Position]bool)
 	// xElfCounts := make(map[int]int)
 	yElfCounts := make(map[int]int)
@@ -354,9 +382,7 @@ func plantSeedlings(rounds int) int {
 				if val == '#' {
 					position := newPos(i, lineNo)
 					positions[position] = true
-					// updateAxisElfCount(xElfCounts, i, 1)
 					updateAxisElfCount(yElfCounts, lineNo, 1)
-					// fmt.Println("position:", position, yElfCounts)
 					if xMin == -1 || xMin > i {
 						xMin = i
 					}
@@ -392,31 +418,33 @@ func plantSeedlings(rounds int) int {
 		checkElvesWest,
 		checkElvesEast,
 	}
-	fmt.Println("before")
-	fmt.Println("positions:", positions)
+	// fmt.Println("before")
+	// fmt.Println("positions:", positions)
 	// fmt.Println("xPositions:", xElfCounts)
-	fmt.Println("yPositions:", yElfCounts)
-	fmt.Println("----")
-	for round := 0; round < rounds; round++ {
+	// fmt.Println("yPositions:", yElfCounts)
+	// fmt.Println("----")
+	fmt.Println("elves:", len(positions))
+	round := 0
+	moved := 0
+	for keepSimulating(moved, round) {
 		propositions := make(map[Position][]Position)
 		// first half
+		moved = 0
 		for position, _ := range positions {
-			proposePosition(round, checkElves, position, positions, propositions)
+			moved += proposePosition(round, checkElves, position, positions, propositions)
 		}
-		fmt.Println("propositions:", propositions)
 		// second half
 		for proposedPosition, proposers := range propositions {
-			fmt.Println("proposed:", proposedPosition, proposers)
+			// fmt.Println("proposed:", proposedPosition, proposers)
 			if len(proposers) > 1 {
+				moved -= len(proposers)
 				continue
 			}
 			// update proposer position
 			proposer := proposers[0]
 			delete(positions, proposers[0])
 			positions[proposedPosition] = true
-			// updateAxisElfCount(xElfCounts, proposer.x, -1)
 			updateAxisElfCount(yElfCounts, proposer.y, -1)
-			// updateAxisElfCount(xElfCounts, proposedPosition.x, 1)
 			updateAxisElfCount(yElfCounts, proposedPosition.y, 1)
 			// update min max of grid
 			proposedPositionX, proposedPositionY := proposedPosition.x, proposedPosition.y
@@ -432,28 +460,40 @@ func plantSeedlings(rounds int) int {
 			if yMax < proposedPositionY {
 				yMax = proposedPositionY
 			}
-
 		}
-		fmt.Println("===Round", round)
-		render(xMin, xMax, yMin, yMax, positions)
-		fmt.Println("positions:", positions)
-		// fmt.Println("xPositions:", xElfCounts)
-		fmt.Println("yPositions:", yElfCounts)
+		round += 1
 	}
+	render(xMin, xMax, yMin, yMax, positions)
+	return report(round, xMin, xMax, yMin, yMax, yElfCounts)
+}
 
-	emptyGround := 0
-	width := xMax - xMin + 1
-	for y := yMin; y <= yMax; y++ {
-		if count, ok := yElfCounts[y]; ok {
-			emptyGround += width - count
-		} else {
-			emptyGround += width
+func part1() (keepSimulatingFn, reportFn) {
+	return func(moved, round int) bool {
+			return round == 0 || round < 10 && moved > 0
+		}, func(round, xMin, xMax, yMin, yMax int, yElfCounts map[int]int) int {
+			emptyGround := 0
+			width := xMax - xMin + 1
+			for y := yMin; y <= yMax; y++ {
+				if count, ok := yElfCounts[y]; ok {
+					emptyGround += width - count
+				} else {
+					emptyGround += width
+				}
+			}
+
+			return emptyGround
 		}
-	}
+}
 
-	return emptyGround
+func part2() (keepSimulatingFn, reportFn) {
+	return func(moved, round int) bool {
+			return round == 0 || moved > 0
+		}, func(round, xMin, xMax, yMin, yMax int, yElfCounts map[int]int) int {
+			return round
+		}
 }
 
 func main() {
-	fmt.Println("part1:", plantSeedlings(10))
+	fmt.Println("part1:", plantSeedlings(part1()))
+	fmt.Println("part2:", plantSeedlings(part2()))
 }
