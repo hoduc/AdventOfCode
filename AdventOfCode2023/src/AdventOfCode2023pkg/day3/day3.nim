@@ -75,7 +75,7 @@ type NonEmptyCell = tuple
 proc inBound(v: int, b: int): bool =
     return v >= 0 and v < b
 
-proc day3(fileName: string): (int, int) =
+proc readBoardsNumbersGears(fileName: string): (seq[string], seq[NonEmptyCell], TableRef[tuple[r: int, c: int], seq[int]]) =
     var boards: seq[string]
     var numbers: seq[NonEmptyCell]
     let gears = newTable[tuple[r: int, c: int], seq[int]]()
@@ -96,6 +96,10 @@ proc day3(fileName: string): (int, int) =
             numbers.add((parseInt(line[start .. len(line) - 1]), row, start, len(line) - 1))
         boards.add(line)
         row += 1
+    return (boards, numbers, gears)
+
+proc day3*(fileName: string): (int, int) =
+    let (boards, numbers, gears) = readBoardsNumbersGears(fileName)
     let
         rb = len(boards)
         cb = len(boards[0])
@@ -115,6 +119,7 @@ proc day3(fileName: string): (int, int) =
         gearSum += parts[0] * parts[1]
     return (partSum, gearSum)
 
+    
 test "day3_sample.txt":
     check day3("day3_sample.txt") == (4361, 467835)
 test "day3_sample2.txt":

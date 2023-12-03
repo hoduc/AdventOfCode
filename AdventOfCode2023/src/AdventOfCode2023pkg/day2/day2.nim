@@ -57,7 +57,7 @@ import strutils
 import unittest
 import sugar # ->
 
-proc day2(fileName: string, partFn: (int, openarray[string]) -> int): int =
+proc day2*(fileName: string, partFn: (int, openarray[string]) -> int): int =
     var sum = 0
     for line in lines(fileName):
         let gameSplit = line.split(":")
@@ -74,7 +74,7 @@ proc day2(fileName: string, partFn: (int, openarray[string]) -> int): int =
     
 
 # 12 red cubes, 13 green cubes, and 14 blue cubes?
-proc day2Part1(gameId: int, gameSet: openarray[string]): int =
+proc day2Part1*(gameId: int, gameSet: openarray[string]): int =
     var playAble = true
     for gs in gameSet:
         var
@@ -103,7 +103,7 @@ proc day2Part1(gameId: int, gameSet: openarray[string]): int =
         return gameId
     return 0
 
-proc day2Part2(gameId: int, gameSet: openarray[string]): int =
+proc day2Part2*(gameId: int, gameSet: openarray[string]): int =
     var
         red = -1
         green = -1

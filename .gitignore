@@ -48,5 +48,4 @@ flycheck_*.el
 /network-security.data
 
 # log file
-log*
-*.txt
+*log*

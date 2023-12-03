@@ -48,7 +48,7 @@ What is the sum of all of the calibration values?
 import strutils
 import unittest
 
-proc day1(fileName: string, numberOnly: bool = true): int =
+proc day1*(fileName: string, numberOnly: bool = true): int =
     var calibrationTotal = 0
     for line in lines(fileName):
         var calibration = 0
@@ -83,17 +83,17 @@ proc day1(fileName: string, numberOnly: bool = true): int =
 
 test "day1_sample.txt":
     check day1("day1_sample.txt") == 142
-test "day1_1.txt":
-    check day1("day1_1.txt") == 55123
-test "day1_2_sample.txt":
-    check day1("day1_2_sample.txt", false) == 281
-test "day1_2_sample2.txt":
-    check day1("day1_2_sample2.txt", false) == 162
-test "day1_2_sample3.txt":
-    check day1("day1_2_sample3.txt", false) == 21
-test "day1_2_sample4.txt":
-    check day1("day1_2_sample4.txt", false) == 33
-test "day1_2_sample5.txt":
-    check day1("day1_2_sample5.txt", false) == 18
-test "day1_2.txt":
-    check day1("day1_2.txt", false) == 55260
+# test "day1_1.txt":
+#     check day1("day1_1.txt") == 55123
+# test "day1_2_sample.txt":
+#     check day1("day1_2_sample.txt", false) == 281
+# test "day1_2_sample2.txt":
+#     check day1("day1_2_sample2.txt", false) == 162
+# test "day1_2_sample3.txt":
+#     check day1("day1_2_sample3.txt", false) == 21
+# test "day1_2_sample4.txt":
+#     check day1("day1_2_sample4.txt", false) == 33
+# test "day1_2_sample5.txt":
+#     check day1("day1_2_sample5.txt", false) == 18
+# test "day1_2.txt":
+#     check day1("day1_2.txt", false) == 55260
