@@ -11,6 +11,7 @@ import AdventOfCode2023pkg/submodule
 import AdventOfCode2023pkg/day1/day1
 import AdventOfCode2023pkg/day2/day2
 import AdventOfCode2023pkg/day3/day3
+import AdventOfCode2023pkg/day4/day4
 
 test "correct welcome":
   check getWelcomeMessage() == "Hello, World!"
@@ -38,3 +39,7 @@ test "day3":
     check day3("day3_sample2.txt") == (4, 0)
     check day3("day3_sample3.txt") == (9, 20)
     check day3("day3.txt") == (535235, 79844424)
+
+test "day4":
+    check day4("day4_sample.txt") == 13
+    check day4("day4.txt") == 18619
