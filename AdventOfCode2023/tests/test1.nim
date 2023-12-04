@@ -41,5 +41,5 @@ test "day3":
     check day3("day3.txt") == (535235, 79844424)
 
 test "day4":
-    check day4("day4_sample.txt") == 13
-    check day4("day4.txt") == 18619
+    check day4("day4_sample.txt") == (13, 30)
+    check day4("day4.txt") == (18619, 0)
