@@ -41,10 +41,12 @@ test "day3":
     check day3("day3_sample3.txt") == (9, 20)
     check day3("day3.txt") == (535235, 79844424)
 
-# test "day4":
-#     check day4("day4_sample.txt") == (13, 30)
-#     # check day4("day4.txt") == (18619, 0)
+test "day4":
+    check day4("day4_sample.txt") == (13, 30)
+    check day4("day4.txt") == (18619, 8063216)
 
 test "day5":
-    check day5("day5_sample.txt") == 35
-    check day5("day5.txt") == 462648396
+    check day5p1("day5_sample.txt") == 35
+    check day5p1("day5.txt") == 462648396
+    # check day5p2("day5_sample.txt") == 46
+    #check day5p2("day5.txt") == 46

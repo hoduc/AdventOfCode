@@ -75,7 +75,6 @@ import std/sequtils
 import std/sugar
 import std/sets
 import std/math
-import std/tables
 
 type Card = tuple
     id: int
@@ -84,7 +83,6 @@ type Card = tuple
 
 proc day4*(fileName: string): (int, int) =    
     var cardsMatchedWinning: seq[Card]
-    var lineCount = 1
     for line in lines(fileName):
         # echo(lineCount, line)
         let splits = line.split(":")
@@ -97,26 +95,40 @@ proc day4*(fileName: string): (int, int) =
         let winnings = toHashSet(numbers[0].splitWhitespace().map(e => parseInt(e)))
         let matchedHands = numbers[1].splitWhitespace().map(e => parseInt(e)).filter(e => e in winnings)
         cardsMatchedWinning.add((cardId, len(matchedHands), int(pow(2.0, float(len(matchedHands) - 1)))))    
-    var q: seq[Card]
+    
+    var idTracker: seq[tuple[id: int, matched: int, freq: int]]
+    
     for cw in cardsMatchedWinning:
-        q.add(cw)
-    # echo(q)   
-    let idTracker = newTable[int, int]()
-    while len(q) > 0:
-        let
-            cardId = q[0].id
-            matched = q[0].matched
-        if cardId notin idTracker:
-            idTracker[cardId] = 0
-        idTracker[cardId] += 1
-        if matched > 0:
-            var i = cardId
-            # echo("===", i, ",", cardId, "|", cardId + matched)
-            while i < cardId + matched and i < len(cardsMatchedWinning):
-                # echo(i)
-                q.add(cardsMatchedWinning[i])
-                # q.insert(cardsMatchedWinning[i], 0)
-                i += 1
-        q.delete(0)
-    # echo(idTracker)
-    return (sum(cardsMatchedWinning.map(e => e.winnings)), sum(idTracker.values.toSeq))
+        idTracker.add((cw.id, cw.matched, 1))
+    # echo(idTracker.map(e => e.freq))
+
+    #[
+        Explanation of how this works as i thought about it. This is for later reflection
+        We have the following tuples (x,y)
+        x: card number
+        y: how many matched/winnings
+        (1,4)
+        (2,2)
+        (3,2)
+        (4,1)
+        (5,0)
+        (6,0)
+        we started out with the following card 1st, 2nd -> 6th with frequencies
+         1 2 3 4 5 6
+        [1,1,1,1,1,1]
+        because 1 makes 4 copies of (2,3,4,5) 1 each, total cards we have is
+        [1,2,2,2,2,1] (1 more than the original cards at hands)
+        next we know that 2 makes 2 copies of (3,4) 1 each, total cards we have is
+        [1,2,4,4,2,1]
+        3 -> (4,5)
+        [1,2,4,8,6,1]
+        4 -> (5)
+        [1,2,4,8,14,1]
+        5 and 6 gives no copy. thus the logic
+        aka for each j that is the copies of x, new cards are j's freq + x's freq
+    ]#
+    for i, (id, matched, f) in idTracker.pairs:
+        for j in id .. id + matched - 1:
+            idTracker[j].freq += idTracker[i].freq
+    # echo(idTracker.map(e => e.freq))
+    return (sum(cardsMatchedWinning.map(e => e.winnings)), sum(idTracker.map(e => e.freq)))
