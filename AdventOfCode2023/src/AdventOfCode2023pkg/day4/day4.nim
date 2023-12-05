@@ -115,6 +115,7 @@ proc day4*(fileName: string): (int, int) =
             while i < cardId + matched and i < len(cardsMatchedWinning):
                 # echo(i)
                 q.add(cardsMatchedWinning[i])
+                # q.insert(cardsMatchedWinning[i], 0)
                 i += 1
         q.delete(0)
     # echo(idTracker)
