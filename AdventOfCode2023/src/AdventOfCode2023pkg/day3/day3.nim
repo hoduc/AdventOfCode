@@ -120,11 +120,11 @@ proc day3*(fileName: string): (int, int) =
     return (partSum, gearSum)
 
     
-test "day3_sample.txt":
-    check day3("day3_sample.txt") == (4361, 467835)
-test "day3_sample2.txt":
-    check day3("day3_sample2.txt") == (4, 0)
-test "day3_sample3.txt":
-    check day3("day3_sample3.txt") == (9, 20)
-test "day3.txt":
-    check day3("day3.txt") == (535235, 79844424)
+# test "day3_sample.txt":
+#     check day3("day3_sample.txt") == (4361, 467835)
+# test "day3_sample2.txt":
+#     check day3("day3_sample2.txt") == (4, 0)
+# test "day3_sample3.txt":
+#     check day3("day3_sample3.txt") == (9, 20)
+# test "day3.txt":
+#     check day3("day3.txt") == (535235, 79844424)

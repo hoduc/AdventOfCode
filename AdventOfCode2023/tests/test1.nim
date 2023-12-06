@@ -5,6 +5,7 @@
 #
 # To run these tests, simply execute `nimble test`.
 
+import std/times
 import unittest
 
 import AdventOfCode2023pkg/submodule

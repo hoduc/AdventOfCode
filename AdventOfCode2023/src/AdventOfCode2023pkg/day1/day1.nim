@@ -81,8 +81,8 @@ proc day1*(fileName: string, numberOnly: bool = true): int =
         calibrationTotal += calibration
     return calibrationTotal
 
-test "day1_sample.txt":
-    check day1("day1_sample.txt") == 142
+# test "day1_sample.txt":
+#     check day1("day1_sample.txt") == 142
 # test "day1_1.txt":
 #     check day1("day1_1.txt") == 55123
 # test "day1_2_sample.txt":

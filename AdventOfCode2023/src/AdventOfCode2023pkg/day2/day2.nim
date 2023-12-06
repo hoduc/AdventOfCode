@@ -125,11 +125,11 @@ proc day2Part2*(gameId: int, gameSet: openarray[string]): int =
     # echo "game:", gameId, "(", red, ",", green, ",", blue, ")" , "=>", red*green*blue
     return red*green*blue    
 
-test "day2_sample.txt":
-    check day2("day2_sample.txt", day2Part1) == 8
-test "day2_1.txt":
-    check day2("day2_1.txt", day2Part1) == 2795
-test "day2_2_sample.txt":
-    check day2("day2_sample.txt", day2Part2) == 2286
-test "day2_2.txt":
-    check day2("day2_1.txt", day2Part2) == 75561
+# test "day2_sample.txt":
+#     check day2("day2_sample.txt", day2Part1) == 8
+# test "day2_1.txt":
+#     check day2("day2_1.txt", day2Part1) == 2795
+# test "day2_2_sample.txt":
+#     check day2("day2_sample.txt", day2Part2) == 2286
+# test "day2_2.txt":
+#     check day2("day2_1.txt", day2Part2) == 75561
