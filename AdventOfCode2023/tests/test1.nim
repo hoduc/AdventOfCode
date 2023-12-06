@@ -56,5 +56,7 @@ test "day5":
     #check day5p2("day5.txt") == 46
 
 test "day6":
-    check day6("day6_sample.txt") == 288
-    check day6("day6.txt") == 288
+    check day6p1("day6_sample.txt") == 288
+    check day6p1("day6.txt") == 1084752
+    check day6p2("day6_sample.txt") == 71503
+    check day6p2("day6.txt") == 28228952

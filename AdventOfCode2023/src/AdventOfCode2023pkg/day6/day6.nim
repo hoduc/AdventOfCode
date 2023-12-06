@@ -45,24 +45,61 @@ To see how much margin of error you have, determine the number of ways you can b
 
 Determine the number of ways you could beat the record in each race. What do you get if you multiply these numbers together?
 
+--- Part Two ---
+
+As the race is about to start, you realize the piece of paper with race times and record distances you got earlier actually just has very bad kerning. There's really only one race - ignore the spaces between the numbers on each line.
+
+So, the example from before:
+
+Time:      7  15   30
+Distance:  9  40  200
+
+...now instead means this:
+
+Time:      71530
+Distance:  940200
+
+Now, you have to figure out how many ways there are to win this single race. In this example, the race lasts for 71530 milliseconds and the record distance you need to beat is 940200 millimeters. You could hold the button anywhere from 14 to 71516 milliseconds and beat the record, a total of 71503 ways!
+
+How many ways can you beat the record in this one much longer race?
+
 ]#
 
 import strutils
 import std/sequtils
 import std/sugar
 
-proc day6*(fileName: string): int =
+
+proc timesDistancesStr(fileName: string): (seq[string], seq[string]) =
+    let lines = lines(fileName).toSeq()
+    let times = lines[0].splitWhitespace()[1..^1]
+    let distances = lines[1].splitWhitespace()[1..^1]
+    return (times, distances)
+
+proc timesDistances(fileName: string): (seq[int], seq[int]) =
     let lines = lines(fileName).toSeq()
     let times = lines[0].splitWhitespace()[1..^1].map(e => parseInt(e))
     let distances = lines[1].splitWhitespace()[1..^1].map(e => parseInt(e))
+    return (times, distances)
 
+
+proc countWins(t: int, d: int): int =
+    var win = 0
+    for j in 1..t:
+        if (t - j)*j > d:
+            win += 1
+    return win
+
+proc day6p2*(fileName: string): int =
+    let (times, distances) = timesDistancesStr(fileName)
+    return countWins(parseInt(times.join), parseInt(distances.join))
+
+
+proc day6p1*(fileName: string): int =
+    let (times, distances) = timesDistances(fileName)
     var wins = 1
     for i, t in times.pairs:
-        let d = distances[i]
-        var win = 0
-        for j in 1..t:
-            if (t - j)*j > d:
-                win += 1
-        wins *= win
+        let d = distances[i]        
+        wins *= countWins(t, d)
 
     return wins
