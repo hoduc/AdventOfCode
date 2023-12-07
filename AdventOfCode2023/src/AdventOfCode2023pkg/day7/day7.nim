@@ -100,8 +100,8 @@ type CardType = enum
     FULL_HOUSE, FOUR_OF_A_KIND, FIVE_OF_A_KIND
 
 
-proc cardType1(f: TableRef[string, int]): CardType = 
-    var cardValues = toHashSet(f.mvalues.toSeq())
+proc cardType1(f: Table[string, int]): CardType = 
+    var cardValues = toHashSet(f.values.toSeq())
     var cardType = FIVE_OF_A_KIND
     if len(f) == 4:
         cardType = ONE_PAIR
@@ -117,8 +117,11 @@ proc cardType1(f: TableRef[string, int]): CardType =
             cardType = TWO_PAIR
     return cardType
 
-proc cardType2(f: TableRef[string, int]): CardType = 
-    var cardValues = toHashSet(f.mvalues.toSeq())
+proc cmpCardEnum1(xCard: Card, yCard: Card): int =
+    return cmp(xCard, yCard)
+
+proc cardType2(f: Table[string, int]): CardType = 
+    var cardValues = toHashSet(f.values.toSeq())
     var countJ = f.getOrDefault($J, 0)
     var cardType = FIVE_OF_A_KIND # no J
     if len(f) == 4:
@@ -151,41 +154,15 @@ proc cardType2(f: TableRef[string, int]): CardType =
             cardType = FIVE_OF_A_KIND
     return cardType
 
-proc cardType2(cardStr: string): CardType =
+proc cardType2(cardStr: string): CardType = 
     var cards: seq[Card]
-    var f = newTable[string, int]()
+    var f = initTable[string, int]()
     for c in cardStr:
         cards.add(parseEnum[Card]($(c)))
         if $c notin f:
             f[$c] = 0
         f[$c] += 1
     return cardType2(f)
-
-proc cardTypeRank1(cardStr: string): (CardType, seq[Card]) =
-    var cards: seq[Card]
-    var f = newTable[string, int]()
-    for c in cardStr:
-        cards.add(parseEnum[Card]($(c)))
-        if $c notin f:
-            f[$c] = 0
-        f[$c] += 1
-    return (cardType1(f), cards)
-
-proc cmpCardEnum1(xCard: Card, yCard: Card): int =
-    return cmp(xCard, yCard)
-
-proc camelCmp1(x, y: string): int =
-  let
-    (xCardType, xCardEnums) = cardTypeRank1(x)
-    (yCardType, yCardEnums) = cardTypeRank1(y)
-  var result = cmp(symbolRank(xCardType), symbolRank(yCardType))
-  if result == 0:
-    for i in 0..len(xCardEnums):
-        result = cmpCardEnum1(xCardEnums[i], yCardEnums[i])
-        if result != 0:
-            break
-  return result
-
 
 proc cardOrder(card: Card): int =
     if (card == J):
@@ -195,32 +172,50 @@ proc cardOrder(card: Card): int =
 proc cmpCardEnum2(xCard: Card, yCard: Card): int =
     return cmp(cardOrder(xCard), cardOrder(yCard))
 
-proc cardTypeRank2(cardStr: string): (CardType, seq[Card]) =
+proc cardTypeRank(cardStr: string, cardTypeFn: (Table[string, int]) -> CardType): (CardType, seq[Card]) =
     var cards: seq[Card]
-    var f = newTable[string, int]()
+    var f = initTable[string, int]()
     for c in cardStr:
         cards.add(parseEnum[Card]($(c)))
         if $c notin f:
             f[$c] = 0
         f[$c] += 1
-    return (cardType2(f), cards)
+    return (cardTypeFn(f), cards)
 
-proc camelCmp2(x, y: string): int =
-  let
-    (xCardType, xCardEnums) = cardTypeRank2(x)
-    (yCardType, yCardEnums) = cardTypeRank2(y)
-  var result = cmp(symbolRank(xCardType), symbolRank(yCardType))
-  if result == 0:
+proc cardTypeRank1(cardStr: string): (CardType, seq[Card]) =
+    cardTypeRank(cardStr, cardType1)
+
+
+proc stringToCards(cardStr: string): seq[Card] =
+    var cards: seq[Card]
+    for c in cardStr:
+        cards.add(parseEnum[Card]($(c)))
+    return cards
+
+proc cmpCardEnums(xCardEnums: seq[Card], yCardEnums: seq[Card], cmpCardEnumFn: (Card, Card) -> int): int =
+    var result = 0
     for i in 0..len(xCardEnums):
-        result = cmpCardEnum2(xCardEnums[i], yCardEnums[i])
+        result = cmpCardEnumFn(xCardEnums[i], yCardEnums[i])
         if result != 0:
             break
-  return result
+    return result
+    
+proc sortHands(hands: var openArray[string],
+               cardTypeFn: (Table[string, int]) -> CardType,
+               cmpCardEnumFn: (Card, Card) -> int): void =
+    hands.sort do (x, y: string) -> int:
+        let
+            (xCardType, xCardEnums) = cardTypeRank(x, cardTypeFn)
+            (yCardType, yCardEnums) = cardTypeRank(y, cardTypeFn)
+        var result = cmp(symbolRank(xCardType), symbolRank(yCardType))
+        if result == 0:
+            return cmpCardEnums(xCardEnums, yCardEnums, cmpCardEnumFn)
+        return result 
 
 
-proc handsBids(fileName: string): (seq[string], TableRef[string, int]) =
+proc handsBids(fileName: string): (seq[string], Table[string, int]) =
     var hands : seq[string]
-    var bids = newTable[string, int]()
+    var bids = initTable[string, int]()
     for line in lines(fileName):
         let splits = line.splitWhitespace()
         let hand = splits[0] 
@@ -229,23 +224,26 @@ proc handsBids(fileName: string): (seq[string], TableRef[string, int]) =
     
     return (hands, bids)
 
-proc totalWinnings(hands: seq[string], bids: TableRef[string, int]): int =
+proc totalWinnings(hands: seq[string], bids: Table[string, int]): int =
     var total = 0
     for i in 0 .. len(hands) - 1:
         total += bids[hands[i]] * (i + 1)
     return total
 
-proc day71*(fileName: string): int =
+proc day7(fileName: string,
+          cardTypeFn: (Table[string, int]) -> CardType,
+          cmpCardEnumFn: (Card, Card) -> int): int =
     var (hands, bids) = handsBids(fileName)
-    hands.sort(camelCmp1)
+    sortHands(hands, cardTypeFn, cmpCardEnumFn)
     return totalWinnings(hands, bids)
 
+proc day71*(fileName: string): int =
+    return day7(fileName, cardType1, cmpCardEnum1)
+
 proc day72*(fileName: string): int =
-    var (hands, bids) = handsBids(fileName)
-    for hand in hands:
-        echo hand, "=>", cardType2(hand)
-    hands.sort(camelCmp2)
-    return totalWinnings(hands, bids)
+    return day7(fileName, cardType2, cmpCardEnum2)
+
+
 
 
 test "some test":
@@ -256,9 +254,11 @@ test "some test":
     check cardTypeRank1("23432") == (TWO_PAIR, @[TWO, THREE, FOUR, THREE, TWO])
     check cardTypeRank1("A23A4") == (ONE_PAIR, @[A, TWO, THREE, A, FOUR])
     check cardTypeRank1("23456") == (HIGH, @[TWO, THREE, FOUR, FIVE, SIX])
-    check camelCmp1("AAAAA", "AA8AA") == 1
-    check camelCmp1("33332", "2AAAA") == 1 
-    check camelCmp1("77788", "77888") == -1
+
+    # check cmpCardEnums(@[A, A, A, A, A], @[A, A, EIGHT, A, A], cmpCardEnum1) == 1
+    # check cmpCardEnums("AAAAA", "AA8AA", cmpCardEnum1) == 1
+    # check cmpCardEnum1("33332", "2AAAA") == 1 
+    # check cmpCardEnum1("77788", "77888") == -1
 
     check cmpCardEnum1(A, A) == 0
     check cmpCardEnum1(A, J) == 1

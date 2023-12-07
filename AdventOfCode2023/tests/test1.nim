@@ -48,7 +48,7 @@ test "day4":
     check day4("day4_sample.txt") == (13, 30)
     check day4("day4.txt") == (18619, 8063216)
 
-import std/times
+# import std/times
 test "day5":
     check day5p1("day5_sample.txt") == 35
     check day5p1("day5.txt") == 462648396
@@ -66,6 +66,6 @@ test "day6":
 
 test "day7":
   check day71("day7_sample.txt") == 6440
-  check day7("day7.txt") == 246163188
+  check day71("day7.txt") == 246163188
   check day72("day7_sample.txt") == 5905
   check day72("day7.txt") == 245794069
