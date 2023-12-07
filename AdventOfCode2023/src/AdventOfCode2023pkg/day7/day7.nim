@@ -55,6 +55,30 @@ Now, you can determine the total winnings of this set of hands by adding up the 
 
 Find the rank of every hand in your set. What are the total winnings?
 
+--- Part Two ---
+
+To make things a little more interesting, the Elf introduces one additional rule. Now, J cards are jokers - wildcards that can act like whatever card would make the hand the strongest type possible.
+
+To balance this, J cards are now the weakest individual cards, weaker even than 2. The other cards stay in the same order: A, K, Q, T, 9, 8, 7, 6, 5, 4, 3, 2, J.
+
+J cards can pretend to be whatever card is best for the purpose of determining hand type; for example, QJJQ2 is now considered four of a kind. However, for the purpose of breaking ties between two hands of the same type, J is always treated as J, not the card it's pretending to be: JKKK2 is weaker than QQQQ2 because J is weaker than Q.
+
+Now, the above example goes very differently:
+
+32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483
+
+    32T3K is still the only one pair; it doesn't contain any jokers, so its strength doesn't increase.
+    KK677 is now the only two pair, making it the second-weakest hand.
+    T55J5, KTJJT, and QQQJA are now all four of a kind! T55J5 gets rank 3, QQQJA gets rank 4, and KTJJT gets rank 5.
+
+With the new joker rule, the total winnings in this example are 5905.
+
+Using the new joker rule, find the rank of every hand in your set. What are the new total winnings?
+
 ]#
 import strutils
 import std/sequtils
@@ -63,6 +87,7 @@ import std/algorithm
 import std/tables
 import std/sets
 import std/enumutils
+import sugar
 import unittest
 
 type Card = enum
@@ -75,18 +100,7 @@ type CardType = enum
     FULL_HOUSE, FOUR_OF_A_KIND, FIVE_OF_A_KIND
 
 
-
-
-
-proc cardTypeRank(cardStr: string): (CardType, seq[Card]) =
-    var cards: seq[Card]
-    var f = initTable[string, int]()
-    for c in cardStr:
-        cards.add(parseEnum[Card]($(c)))
-        if $c notin f:
-            f[$c] = 0
-        f[$c] += 1
-    
+proc cardType1(f: TableRef[string, int]): CardType = 
     var cardValues = toHashSet(f.mvalues.toSeq())
     var cardType = FIVE_OF_A_KIND
     if len(f) == 4:
@@ -101,50 +115,178 @@ proc cardTypeRank(cardStr: string): (CardType, seq[Card]) =
         cardType = THREE_OF_A_KIND
         if cardValues.contains(2):
             cardType = TWO_PAIR
-    return (cardType, cards)
+    return cardType
 
-proc camelCmp(x, y: string): int =
+proc cardType2(f: TableRef[string, int]): CardType = 
+    var cardValues = toHashSet(f.mvalues.toSeq())
+    var countJ = f.getOrDefault($J, 0)
+    var cardType = FIVE_OF_A_KIND # no J
+    if len(f) == 4:
+        cardType = ONE_PAIR
+        if countJ > 0:
+            cardType = THREE_OF_A_KIND
+    elif len(f) == 5: # no J
+        cardType = HIGH
+        if countJ > 0:
+            cardType = ONE_PAIR
+    elif len(f) == 2:
+        cardType = FOUR_OF_A_KIND
+        if cardValues.contains(3):
+            cardType = FULL_HOUSE
+            if countJ == 2 or countJ == 3: # JJJ--
+                cardType = FIVE_OF_A_KIND
+        elif countJ == 1 or countJ == 4:
+            cardType = FIVE_OF_A_KIND
+    elif len(f) == 3:
+        cardType = THREE_OF_A_KIND
+        if cardValues.contains(2):
+            cardType = TWO_PAIR
+            if countJ == 1:
+                cardType = FULL_HOUSE
+            elif countJ == 2:
+                cardType = FOUR_OF_A_KIND
+        elif countJ == 1 or countJ == 3:
+            cardType = FOUR_OF_A_KIND
+        elif countJ == 2:
+            cardType = FIVE_OF_A_KIND
+    return cardType
+
+proc cardType2(cardStr: string): CardType =
+    var cards: seq[Card]
+    var f = newTable[string, int]()
+    for c in cardStr:
+        cards.add(parseEnum[Card]($(c)))
+        if $c notin f:
+            f[$c] = 0
+        f[$c] += 1
+    return cardType2(f)
+
+proc cardTypeRank1(cardStr: string): (CardType, seq[Card]) =
+    var cards: seq[Card]
+    var f = newTable[string, int]()
+    for c in cardStr:
+        cards.add(parseEnum[Card]($(c)))
+        if $c notin f:
+            f[$c] = 0
+        f[$c] += 1
+    return (cardType1(f), cards)
+
+proc cmpCardEnum1(xCard: Card, yCard: Card): int =
+    return cmp(xCard, yCard)
+
+proc camelCmp1(x, y: string): int =
   let
-    (xCardType, xCardEnums) = cardTypeRank(x)
-    (yCardType, yCardEnums) = cardTypeRank(y)
+    (xCardType, xCardEnums) = cardTypeRank1(x)
+    (yCardType, yCardEnums) = cardTypeRank1(y)
   var result = cmp(symbolRank(xCardType), symbolRank(yCardType))
   if result == 0:
     for i in 0..len(xCardEnums):
-        result = cmp(xCardEnums[i], yCardEnums[i])
+        result = cmpCardEnum1(xCardEnums[i], yCardEnums[i])
         if result != 0:
             break
   return result
-  
 
-proc day7*(fileName: string): int =
+
+proc cardOrder(card: Card): int =
+    if (card == J):
+        return -1
+    return symbolRank(card)
+
+proc cmpCardEnum2(xCard: Card, yCard: Card): int =
+    return cmp(cardOrder(xCard), cardOrder(yCard))
+
+proc cardTypeRank2(cardStr: string): (CardType, seq[Card]) =
+    var cards: seq[Card]
+    var f = newTable[string, int]()
+    for c in cardStr:
+        cards.add(parseEnum[Card]($(c)))
+        if $c notin f:
+            f[$c] = 0
+        f[$c] += 1
+    return (cardType2(f), cards)
+
+proc camelCmp2(x, y: string): int =
+  let
+    (xCardType, xCardEnums) = cardTypeRank2(x)
+    (yCardType, yCardEnums) = cardTypeRank2(y)
+  var result = cmp(symbolRank(xCardType), symbolRank(yCardType))
+  if result == 0:
+    for i in 0..len(xCardEnums):
+        result = cmpCardEnum2(xCardEnums[i], yCardEnums[i])
+        if result != 0:
+            break
+  return result
+
+
+proc handsBids(fileName: string): (seq[string], TableRef[string, int]) =
     var hands : seq[string]
-    var bids = initTable[string, int]()
+    var bids = newTable[string, int]()
     for line in lines(fileName):
         let splits = line.splitWhitespace()
         let hand = splits[0] 
         hands.add(hand)
         bids[hand] = parseInt(splits[1])
-    # echo hands
-    # echo bids
+    
+    return (hands, bids)
 
-    hands.sort(camelCmp)
-
-    # echo "(after):", hands
-    # echo "(after):", bids
-
-    var totalWinnings = 0
+proc totalWinnings(hands: seq[string], bids: TableRef[string, int]): int =
+    var total = 0
     for i in 0 .. len(hands) - 1:
-        totalWinnings += bids[hands[i]] * (i + 1)
-    return totalWinnings
+        total += bids[hands[i]] * (i + 1)
+    return total
+
+proc day71*(fileName: string): int =
+    var (hands, bids) = handsBids(fileName)
+    hands.sort(camelCmp1)
+    return totalWinnings(hands, bids)
+
+proc day72*(fileName: string): int =
+    var (hands, bids) = handsBids(fileName)
+    for hand in hands:
+        echo hand, "=>", cardType2(hand)
+    hands.sort(camelCmp2)
+    return totalWinnings(hands, bids)
+
 
 test "some test":
-    check cardTypeRank("AAAAA") == (FIVE_OF_A_KIND, @[A, A, A, A, A])
-    check cardTypeRank("AA8AA") == (FOUR_OF_A_KIND, @[A, A, EIGHT, A, A])
-    check cardTypeRank("23332") == (FULL_HOUSE, @[TWO, THREE, THREE, THREE, TWO])
-    check cardTypeRank("TTT98") == (THREE_OF_A_KIND, @[T, T, T, NINE, EIGHT])
-    check cardTypeRank("23432") == (TWO_PAIR, @[TWO, THREE, FOUR, THREE, TWO])
-    check cardTypeRank("A23A4") == (ONE_PAIR, @[A, TWO, THREE, A, FOUR])
-    check cardTypeRank("23456") == (HIGH, @[TWO, THREE, FOUR, FIVE, SIX])
-    check camelCmp("AAAAA", "AA8AA") == 1
-    check camelCmp("33332", "2AAAA") == 1 
-    check camelCmp("77788", "77888") == -1
+    check cardTypeRank1("AAAAA") == (FIVE_OF_A_KIND, @[A, A, A, A, A])
+    check cardTypeRank1("AA8AA") == (FOUR_OF_A_KIND, @[A, A, EIGHT, A, A])
+    check cardTypeRank1("23332") == (FULL_HOUSE, @[TWO, THREE, THREE, THREE, TWO])
+    check cardTypeRank1("TTT98") == (THREE_OF_A_KIND, @[T, T, T, NINE, EIGHT])
+    check cardTypeRank1("23432") == (TWO_PAIR, @[TWO, THREE, FOUR, THREE, TWO])
+    check cardTypeRank1("A23A4") == (ONE_PAIR, @[A, TWO, THREE, A, FOUR])
+    check cardTypeRank1("23456") == (HIGH, @[TWO, THREE, FOUR, FIVE, SIX])
+    check camelCmp1("AAAAA", "AA8AA") == 1
+    check camelCmp1("33332", "2AAAA") == 1 
+    check camelCmp1("77788", "77888") == -1
+
+    check cmpCardEnum1(A, A) == 0
+    check cmpCardEnum1(A, J) == 1
+    check cmpCardEnum1(J, A) == -1
+
+    check cmpCardEnum2(A, A) == 0
+    check cmpCardEnum2(A, J) == 1
+    check cmpCardEnum2(J, A) == -1
+    check cmpCardEnum2(J, J) == 0
+    check cmpCardEnum2(J, TWO) == -1
+    check cmpCardEnum2(J, EIGHT) == -1
+    check cmpCardEnum2(EIGHT, J) == 1
+
+    check cardType2("AAAAA") == FIVE_OF_A_KIND
+    check cardType2("AAAAJ") == FIVE_OF_A_KIND
+    check cardType2("AAAJJ") == FIVE_OF_A_KIND
+    check cardType2("AAJJJ") == FIVE_OF_A_KIND
+    check cardType2("AJJJJ") == FIVE_OF_A_KIND
+    check cardType2("JJJJJ") == FIVE_OF_A_KIND
+    check cardType2("32T3K") == ONE_PAIR
+    check cardType2("T55J5") == FOUR_OF_A_KIND
+    check cardType2("KTJJT") == FOUR_OF_A_KIND
+    check cardType2("QQQJA") == FOUR_OF_A_KIND
+
+    check cardType2("23456") == HIGH
+    check cardType2("AAJ56") == THREE_OF_A_KIND
+    check cardType2("AAJJ6") == FOUR_OF_A_KIND
+    check cardType2("AAQQJ") == FULL_HOUSE
+    check cardType2("AJQQQ") == FOUR_OF_A_KIND
+    check cardType2("AJ867") == ONE_PAIR
+    
