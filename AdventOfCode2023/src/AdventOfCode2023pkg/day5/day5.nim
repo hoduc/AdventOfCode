@@ -138,26 +138,25 @@ proc convert(x: int, mapper: seq[Mapper]): int =
     return x
 
 
-proc convert(ran: tuple[int, int], mapper: seq[Mapper]): seq[tuple] =
+proc convert(ran: tuple[l: int, r: int], mapper: seq[Mapper]): seq[tuple] =
     var converted_ranges: seq[tuple]
     let q = @[ran]
-    var nonAdded = 0
-    while q and nonAdded < len(q):
+    while q:
+        var added = false
         let
             l = q[0][0]
             r = q[0][1]
         for m in mapper:
             let
                 f = m.src
-                t = m.src + length
+                t = m.src + m.length
             # outside left and outside right
             if (l < f and r < f) or (l >= t and r >= t):
-                continue:
+                continue
             # fit in range or equals
-            if l <= f and r <= t:
+            if l >= f and r <= t:
                 converted_ranges.add((l - f + m.dst, r - f + m.dst))
-                nonAdded -= 1
-                q.deletes(0)
+                added = true
                 break
             #[
                     [---]
@@ -167,8 +166,7 @@ proc convert(ran: tuple[int, int], mapper: seq[Mapper]): seq[tuple] =
             if l < f and t >= f:
                 converted_ranges.add((m.dst, r - f + m.dst))
                 q.add((l, f - 1))
-                q.deletes(0)
-                nonAdded -= 1
+                added = true
                 break
             #[
                     [---]
@@ -178,12 +176,12 @@ proc convert(ran: tuple[int, int], mapper: seq[Mapper]): seq[tuple] =
             if l <= t and r > t:
                 converted_ranges.add((l - f + m.st, m.dst))
                 q.add((t + 1, r))
-                nonAdded -= 1
+                added = true
                 break
-            nonAdded += 1
-
-        for r in q:
-            converted_ranges.add(r)
+        # does not exist in mapping
+        if not added:
+            converted_ranges.add((l, r))
+        q.deletes(0)
     return converted_ranges
 
 proc seedsMappers(fileName: string): (seq[int], seq[seq[Mapper]]) =
@@ -236,11 +234,14 @@ proc day5p2*(fileName: string): int =
     echo "pre-seeds:", seeds
     for mapper in mappers:
         echo mapper[0].src, "=>", mapper[^1].src, "|len:", len(mapper)
-    var newSeeds: seq[int]
+    var seedsRange: seq[tuple[l: int, r: int]]
     
     var i = 0
     while i < len(seeds):
-        for j in seeds[i] .. seeds[i] + seeds[i+1] - 1:
-            newSeeds.add(j)
+        seedsRange.add((seeds[i], seeds[i+1]))
         i += 2
-    return minLoc(newSeeds, mappers)
+    
+    # var transformedRanges = []
+    # for seedRange in seedsRange:
+    #     convert
+    return 0

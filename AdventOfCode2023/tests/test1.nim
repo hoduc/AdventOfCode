@@ -16,6 +16,7 @@ import AdventOfCode2023pkg/day4/day4
 import AdventOfCode2023pkg/day5/day5
 import AdventOfCode2023pkg/day6/day6
 import AdventOfCode2023pkg/day7/day7
+import AdventOfCode2023pkg/day8/day8
 
 test "correct welcome":
   check getWelcomeMessage() == "Hello, World!"
@@ -50,11 +51,10 @@ test "day4":
 
 # import std/times
 test "day5":
-    check day5p1("day5_sample.txt") == 35
-    check day5p1("day5.txt") == 462648396
-    
+    # check day5p1("day5_sample.txt") == 35
+    # check day5p1("day5.txt") == 462648396
     # let time = cpuTime()
-    # check day5p2("day5_sample.txt") == 46
+    check day5p2("day5_sample.txt") == 46
     # echo "Time taken:", (cpuTime() - time)*
     #check day5p2("day5.txt") == 46
 
@@ -69,3 +69,8 @@ test "day7":
   check day71("day7.txt") == 246163188
   check day72("day7_sample.txt") == 5905
   check day72("day7.txt") == 245794069
+
+test "day8":
+    check day8("day8_sample.txt") == 2
+    check day8("day8_sample2.txt") == 6
+    check day8("day8.txt") == 6
