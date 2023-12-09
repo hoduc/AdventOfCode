@@ -49,14 +49,12 @@ test "day4":
     check day4("day4_sample.txt") == (13, 30)
     check day4("day4.txt") == (18619, 8063216)
 
-# import std/times
 test "day5":
-    # check day5p1("day5_sample.txt") == 35
-    # check day5p1("day5.txt") == 462648396
-    # let time = cpuTime()
+    check day5p1("day5_sample.txt") == 35
+    check day5p1("day5.txt") == 462648396
+    
     check day5p2("day5_sample.txt") == 46
-    # echo "Time taken:", (cpuTime() - time)*
-    #check day5p2("day5.txt") == 46
+    check day5p2("day5.txt") == 2520479
 
 test "day6":
     check day6p1("day6_sample.txt") == 288

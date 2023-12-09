@@ -123,7 +123,7 @@ Consider all of the initial seed numbers listed in the ranges on the first line 
 import strutils
 import std/sequtils
 import std/sugar
-# import std/algorithm
+import std/algorithm
 
 
 type Mapper = tuple
@@ -137,15 +137,14 @@ proc convert(x: int, mapper: seq[Mapper]): int =
             return x - m.src + m.dst
     return x
 
-
-proc convert(ran: tuple[l: int, r: int], mapper: seq[Mapper]): seq[tuple] =
-    var converted_ranges: seq[tuple]
-    let q = @[ran]
-    while q:
+proc convert(ran: tuple[l: int, r: int], mapper: seq[Mapper]): seq[tuple[l: int, r: int]] =
+    var convertedRanges: seq[tuple[l: int, r: int]]
+    var q = @[ran]
+    while len(q) != 0:
         var added = false
         let
-            l = q[0][0]
-            r = q[0][1]
+            l = q[0].l
+            r = q[0].r
         for m in mapper:
             let
                 f = m.src
@@ -155,7 +154,7 @@ proc convert(ran: tuple[l: int, r: int], mapper: seq[Mapper]): seq[tuple] =
                 continue
             # fit in range or equals
             if l >= f and r <= t:
-                converted_ranges.add((l - f + m.dst, r - f + m.dst))
+                convertedRanges.add((l - f + m.dst, r - f + m.dst))
                 added = true
                 break
             #[
@@ -163,8 +162,15 @@ proc convert(ran: tuple[l: int, r: int], mapper: seq[Mapper]): seq[tuple] =
                 [-----]
                 [---]
             ]#
-            if l < f and t >= f:
-                converted_ranges.add((m.dst, r - f + m.dst))
+            if l < f and t >= r:
+                # echo "here1??"
+                # echo "(l,r):", (l,r)
+                # echo "(f, t):", (f,t)
+                # echo "add:", (l, f-1), "|convert:", (f, r)
+                # echo r - f
+                convertedRanges.add((m.dst, r - f + m.dst))
+                # echo l, ",", f
+                # old: (m.dst, t - f + m.dst)
                 q.add((l, f - 1))
                 added = true
                 break
@@ -174,15 +180,15 @@ proc convert(ran: tuple[l: int, r: int], mapper: seq[Mapper]): seq[tuple] =
                         [---]
             ]#    
             if l <= t and r > t:
-                converted_ranges.add((l - f + m.st, m.dst))
+                convertedRanges.add((l - f + m.dst, t - f + m.dst))
                 q.add((t + 1, r))
                 added = true
                 break
         # does not exist in mapping
         if not added:
-            converted_ranges.add((l, r))
-        q.deletes(0)
-    return converted_ranges
+            convertedRanges.add((l, r))
+        q.delete(0)
+    return convertedRanges
 
 proc seedsMappers(fileName: string): (seq[int], seq[seq[Mapper]]) =
     var seeds: seq[int]
@@ -191,6 +197,8 @@ proc seedsMappers(fileName: string): (seq[int], seq[seq[Mapper]]) =
     var lineCount = 0
     for line in lines(fileName):
         # echo(line)
+        if len(line) > 0 and line[0] == '#':
+            continue
         if line.contains("seeds"):
             # echo(line.splitWhitespace())
             seeds = line.splitWhitespace()[1..^1].map(c => parseInt(c))
@@ -200,6 +208,9 @@ proc seedsMappers(fileName: string): (seq[int], seq[seq[Mapper]]) =
         elif len(line) == 0:
             if lineCount == 1:
                 continue
+            # Sorting is very important as it some range has a 1 number overlap
+            # prove to be a disaster sometimes
+            mapper.sort()
             # echo(mapper)
             mappers.add(mapper)
             mapper = @[]
@@ -211,7 +222,7 @@ proc seedsMappers(fileName: string): (seq[int], seq[seq[Mapper]]) =
     return (seeds, mappers)
 
 proc minLoc(seeds: seq[int], mappers: seq[seq[Mapper]]): int =
-    echo "seeds:", seeds
+    # echo "seeds:", seeds
     # echo len(mappers)
     var minLocation = -1
     for seed in seeds:
@@ -229,19 +240,35 @@ proc day5p1*(fileName: string): int =
     return minLoc(seeds, mappers)
 
 proc day5p2*(fileName: string): int =
-    let (seeds, mappers) = seedsMappers(fileName)
+    var (seeds, mappers) = seedsMappers(fileName)
     # echo mappers.map(mapper => len(mapper))
-    echo "pre-seeds:", seeds
-    for mapper in mappers:
-        echo mapper[0].src, "=>", mapper[^1].src, "|len:", len(mapper)
-    var seedsRange: seq[tuple[l: int, r: int]]
-    
+    # echo "pre-seeds:", seeds
+    # echo mappers
+    # for mapper in mappers:
+    #     echo mapper[0].src, "=>", mapper[^1].src, "|len:", len(mapper)
+    var convertedRanges: seq[tuple[l: int, r: int]]
     var i = 0
     while i < len(seeds):
-        seedsRange.add((seeds[i], seeds[i+1]))
+        convertedRanges.add((seeds[i], seeds[i] + seeds[i+1] - 1))
         i += 2
     
-    # var transformedRanges = []
-    # for seedRange in seedsRange:
-    #     convert
-    return 0
+    var j = 0
+    while len(mappers) > 0:
+        let mapper = mappers[0]
+        var l = len(convertedRanges)
+        for i in 0 ..< l:
+            for r in convert(convertedRanges[i], mapper):
+                convertedRanges.add(r)
+                # echo r
+
+        for i in 0 ..< l:
+            convertedRanges.delete(0)
+        mappers.delete(0)
+        j += 1
+    
+    var minLocation = -1
+    for ran in convertedRanges:
+        if minLocation == -1 or minLocation > ran.l:
+            minLocation = ran.l
+
+    return minLocation - 1
