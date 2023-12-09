@@ -17,6 +17,7 @@ import AdventOfCode2023pkg/day5/day5
 import AdventOfCode2023pkg/day6/day6
 import AdventOfCode2023pkg/day7/day7
 import AdventOfCode2023pkg/day8/day8
+import AdventOfCode2023pkg/day9/day9
 
 test "correct welcome":
   check getWelcomeMessage() == "Hello, World!"
@@ -69,6 +70,12 @@ test "day7":
   check day72("day7.txt") == 245794069
 
 test "day8":
-    check day8("day8_sample.txt") == 2
-    check day8("day8_sample2.txt") == 6
-    check day8("day8.txt") == 6
+    check day81("day8_sample.txt") == 2
+    check day81("day8_sample2.txt") == 6
+    check day81("day8.txt") == 20093
+    check day82("day8_sample3.txt") == 6
+    check day82("day8.txt") == 6
+  
+test "day9":
+  check day9("day9_sample.txt") == 114
+  check day9("day9.txt") == 114
