@@ -73,13 +73,33 @@ If you find the next value for each history in this example and add them togethe
 
 Analyze your OASIS report and extrapolate the next
 
+--- Part Two ---
+
+Of course, it would be nice to have even more history included in your report. Surely it's safe to just extrapolate backwards as well, right?
+
+For each history, repeat the process of finding differences until the sequence of differences is entirely zero. Then, rather than adding a zero to the end and filling in the next values of each previous sequence, you should instead add a zero to the beginning of your sequence of zeroes, then fill in new first values for each previous sequence.
+
+In particular, here is what the third example history looks like when extrapolating back in time:
+
+5  10  13  16  21  30  45
+  5   3   3   5   9  15
+   -2   0   2   4   6
+      2   2   2   2
+        0   0   0
+
+Adding the new values on the left side of each sequence from bottom to top eventually reveals the new left-most history value: 5.
+
+Doing this for the remaining example data above results in previous values of -3 for the first history and 0 for the second history. Adding all three new values together produces 2.
+
+Analyze your OASIS report again, this time extrapolating the previous value for each history. What is the sum of these extrapolated values?
+
 ]#
 
 import std/strutils
 import std/sequtils
 
 
-proc predict(hist: seq[int]): int =
+proc predict(hist: seq[int], backOrFront: bool): int =
     var countZero = 0
     var ds: seq[int]
     for i in 1 ..< len(hist):
@@ -90,10 +110,17 @@ proc predict(hist: seq[int]): int =
 
     if countZero == len(hist):
         return 0
-    return hist[^1] + predict(ds)
+    return if backOrFront: hist[^1] + predict(ds, backOrFront) else: hist[0] - predict(ds, backOrFront)
 
-proc day9*(filename: string): int =
+
+proc day9(filename: string, backOrFront: bool = true): int =
     var sum = 0
     for line in lines(fileName):
-        sum += predict(line.splitWhitespace().map(parseInt))
+        sum += predict(line.splitWhitespace().map(parseInt), backOrFront)
     return sum
+
+proc day91*(fileName: string): int =
+    return day9(fileName)
+
+proc day92*(fileName: string): int =
+    return day9(fileName, false)

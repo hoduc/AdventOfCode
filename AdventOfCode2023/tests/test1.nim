@@ -77,5 +77,7 @@ test "day8":
     check day82("day8.txt") == 6
   
 test "day9":
-  check day9("day9_sample.txt") == 114
-  check day9("day9.txt") == 114
+  check day91("day9_sample.txt") == 114
+  check day91("day9.txt") == 1641934234
+  check day92("day9_sample.txt") == 2
+  check day92("day9.txt") == 2
