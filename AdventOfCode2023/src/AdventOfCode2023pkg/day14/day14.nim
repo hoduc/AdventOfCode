@@ -57,10 +57,21 @@ Tilt the platform so that the rounded rocks all roll north. Afterward, what is t
 ]#
 
 import std/tables
+import std/sets
+import std/sequtils
 
 type Cell = object
     y: int
     x: int
+
+proc echoPlatform(platform: seq[string], rocks: HashSet[Cell]) =
+    for y in 0 ..< len(platform):
+        for x, c in platform[y].pairs:
+            if Cell(y: y, x: x) in rocks:
+                stdout.write('O')
+            else:
+                stdout.write(c)
+        echo ""
 
 proc day14*(fileName: string): int =    
     var
@@ -68,42 +79,64 @@ proc day14*(fileName: string): int =
         bl = initOrderedTable[int, seq[Cell]]()
         yb = 0
         xb = 0
+        platform: seq[string]
         totalLoad = 0
     for line in lines(fileName):
         xb = 0
+        platform.add(line)
         for x, c in line.pairs:
             if c == 'O':
                 if x notin rr:
                     rr[x] = @[]                
                 rr[x].add(Cell(y: yb,x: x))
-            elif c == '.':
+            elif c == '#':
                 if x notin bl:
                     bl[x] = @[]
                 bl[x].add(Cell(y: yb,x: x))
             xb += 1
         yb += 1
     
+    echo "before:"
+    var rp = initHashSet[Cell]()
+    for _, rocks in rr:
+        for rock in rocks:
+            rp.incl(rock)
+
+    echo rp
+    echoPlatform(platform, rp)
     for x, rocks in rr.mpairs:
         for rock in rocks.mitems:
             # no blocking
             # pick the top most position
+            # echo "start:", rock
             if rock.x notin bl:
                 rock.y = 0
                 totalLoad += (yb - rock.y)
                 bl[rock.x] = @[rock]
+                # echo "end:", rock
                 continue
-            # find the first one that has y < rock
             var blocks = bl[rock.x]
-            var i = 0
-            while i < len(blocks):            
-                if rock.y > blocks[i].y:
-                    break
-                i += 1
-            if i >= len(blocks):
-                rock.y = blocks[^1].y + 1
-                blocks.add(rock)
+            # only consider block that has y < current rock y
+            var i = len(blocks) - 1
+            while i > 0 and blocks[i].y > rock.y:
+                # echo "comparing:", blocks[i], " & ", rock
+                i -= 1
+            if i == 0 and blocks[i].y > rock.y: # nothing blocks
+                rock.y = 0
+                bl[rock.x] = @[rock] & blocks
             else:
-                rock.y = blocks[i-1].y + 1
-                blocks.insert(rock, i)
+                # echo "here?"
+                rock.y = blocks[i].y + 1
+                bl[rock.x] = @blocks[0..i-1] & @[rock] & @blocks[i+1..^1]
+            # echo i, "|", blocks
+            # echo "end:", rock
             totalLoad += (yb - rock.y)
+    # echo "after:"
+    rp = initHashSet[Cell]()
+    for _, rocks in rr:
+        for rock in rocks:
+            rp.incl(rock)
+    echoPlatform(platform, rp)
     return totalLoad
+
+
