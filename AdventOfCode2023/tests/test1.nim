@@ -5,7 +5,6 @@
 #
 # To run these tests, simply execute `nimble test`.
 
-import std/times
 import unittest
 
 import AdventOfCode2023pkg/submodule
@@ -98,7 +97,7 @@ test "correct welcome":
   # check day102("day10.txt") == 8
 
 # test "day11":
-#   check day11("day11_sample.txt") == 374
+  # check day11("day11_sample.txt") == 374
 #   check day11("day11_sample2.txt") == 3
 #   check day11("day11_sample3.txt") == 7
   # too high: 11614852
@@ -112,6 +111,21 @@ test "correct welcome":
 #   check day14("day14_sample.txt") == 136 
 #   check day14("day14.txt") == 136
 
-test "day16":
-  check day16("day16_sample.txt") == 46
-  check day16("day16.txt") == 46
+
+# ======= measure time
+# write a template for this
+# import std/monotimes
+# import std/times
+# import std/os
+# var startTime = getMonoTime()
+# sleep(100)
+# var endTime = getMonoTime()
+# var elapsedTime: Duration = endTime - startTime
+# echo " elapsed:", elapsedTime.inMilliseconds()
+
+# test "day16":
+#   check day161("day16_sample.txt") == 46
+#   check day161("day16.txt") == 7210
+#   check day162("day16_sample.txt") == 51
+#   # TODO: fix runtime. This took : 68422 milliseconds
+#   check day162("day16.txt") == 7673

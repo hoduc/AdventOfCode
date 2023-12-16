@@ -61,12 +61,44 @@ Ultimately, in this example, 46 tiles become energized.
 
 The light isn't energizing enough tiles to produce lava; to debug the contraption, you need to start by analyzing the current situation. With the beam starting in the top-left heading right, how many tiles end up being energized?
 
+--- Part Two ---
+
+As you try to work out what might be wrong, the reindeer tugs on your shirt and leads you to a nearby control panel. There, a collection of buttons lets you align the contraption so that the beam enters from any edge tile and heading away from that edge. (You can choose either of two directions for the beam if it starts on a corner; for instance, if the beam starts in the bottom-right corner, it can start heading either left or upward.)
+
+So, the beam could start on any tile in the top row (heading downward), any tile in the bottom row (heading upward), any tile in the leftmost column (heading right), or any tile in the rightmost column (heading left). To produce lava, you need to find the configuration that energizes as many tiles as possible.
+
+In the above example, this can be achieved by starting the beam in the fourth tile from the left in the top row:
+
+.|<2<\....
+|v-v\^....
+.v.v.|->>>
+.v.v.v^.|.
+.v.v.v^...
+.v.v.v^..\
+.v.v/2\\..
+<-2-/vv|..
+.|<<<2-|.\
+.v//.|.v..
+
+Using this configuration, 51 tiles are energized:
+
+.#####....
+.#.#.#....
+.#.#.#####
+.#.#.##...
+.#.#.##...
+.#.#.##...
+.#.#####..
+########..
+.#######..
+.#...#.#..
+
+Find the initial beam configuration that energizes the largest number of tiles; how many tiles are energized in that configuration?
+
 ]#
 
 import std/sets
-import std/sequtils
 import std/algorithm
-import std/sugar
 import unittest
 
 # model both position and direction
@@ -148,8 +180,7 @@ proc echoContraption(contraption: seq[string], visited: HashSet[Coord]) =
                 stdout.write(contraption[y][x])
         stdout.write('\n')
 
-
-proc day16*(fileName: string): int =
+proc readContraption(fileName: string): (seq[string], int, int) =
     var
         contraption: seq[string]
         yb = 0
@@ -158,8 +189,11 @@ proc day16*(fileName: string): int =
         xb = len(line)
         contraption.add(line)
         yb += 1
+    return (contraption, yb, xb)
+
+proc explore(startPosition: Entity, contraption: seq[string], yb, xb: int): int =
     var
-        q = @[makeEntity(0, 0, EAST)]
+        q = @[startPosition]
         visited = initHashSet[Entity]()
         visitedPosition = initHashSet[Coord]()
     while len(q) > 0:
@@ -180,12 +214,24 @@ proc day16*(fileName: string): int =
             if bx < 0 or bx >= xb or by < 0 or by >= yb or b in visited:
                 continue
             q.insert(b, 0)
-        # var positionVisited = initHashSet[Coord]()
-        # for entity in visited:
-        #     positionVisited.incl(entity.position)
-        # echoContraption(contraption, positionVisited)
     # echo contraption
     return len(visitedPosition)
+
+proc day161*(fileName: string): int =
+    var (contraption, yb, xb) = readContraption(fileName)
+    return explore(makeEntity(0, 0, EAST), contraption, yb, xb)
+
+proc day162*(fileName: string): int =
+    var (contraption, yb, xb) = readContraption(fileName)
+    var maxConfiguration = -1
+    # top most left, right
+    for y in 0 ..< yb:
+        maxConfiguration = max(maxConfiguration, explore(makeEntity(y, 0, EAST), contraption, yb, xb))
+        maxConfiguration = max(maxConfiguration, explore(makeEntity(y, xb - 1, WEST), contraption, yb, xb))
+    for x in 0 ..< xb:
+        maxConfiguration = max(maxConfiguration, explore(makeEntity(0, x, SOUTH), contraption, yb, xb))
+        maxConfiguration = max(maxConfiguration, explore(makeEntity(yb - 1, x, NORTH), contraption, yb, xb))
+    return maxConfiguration
 
 test "logic":
     var entity = makeEntity(0, 0, SOUTH)
