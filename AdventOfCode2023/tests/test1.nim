@@ -97,10 +97,13 @@ test "correct welcome":
   # check day102("day10.txt") == 8
 
 test "day11":
-  check day11("day11_sample.txt") == 374
-  check day11("day11_sample2.txt") == 3
-  check day11("day11_sample3.txt") == 7
-  check day11("day11.txt") == 10422930
+  check day111("day11_sample.txt") == 374
+  check day111("day11_sample2.txt") == 3
+  check day111("day11_sample3.txt") == 7
+  check day111("day11.txt") == 10422930
+  check day112("day11_sample.txt", 10) == 1030
+  check day112("day11_sample.txt", 100) == 8410
+  check day112("day11.txt", 1000000) == 699909023130
 
 # test "day13":
 #   check day13("day13_sample.txt") == 405

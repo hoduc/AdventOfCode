@@ -97,6 +97,16 @@ In this example, after expanding the universe, the sum of the shortest path betw
 
 Expand the universe, then find the length of the shortest path between every pair of galaxies. What is the sum of these lengths?
 
+--- Part Two ---
+
+The galaxies are much older (and thus much farther apart) than the researcher initially estimated.
+
+Now, instead of the expansion you did before, make each empty row or column one million times larger. That is, each empty row should be replaced with 1000000 empty rows, and each empty column should be replaced with 1000000 empty columns.
+
+(In the example above, if each empty row or column were merely 10 times larger, the sum of the shortest paths between every pair of galaxies would be 1030. If each empty row or column were merely 100 times larger, the sum of the shortest paths between every pair of galaxies would be 8410. However, your universe will need to expand far beyond these values.)
+
+Starting with the same initial image, expand the universe according to these new rules, then find the length of the shortest path between every pair of galaxies. What is the sum of these lengths?
+
 ]#
 
 import std/tables
@@ -111,7 +121,7 @@ type Coord = object
 proc manhattanDistance(a, b: Coord): int =
     return abs(a.y - b.y) + abs(a.x - b.x)
 
-proc day11*(fileName: string): int =
+proc readGalaxiesAndExpand(fileName: string, emptySpaceExpansionBase: int = 1): Table[Coord, Coord] =
     # mapping from (y,x) to (incy, incx)
     var
         galaxies = initTable[Coord, Coord]()
@@ -150,15 +160,18 @@ proc day11*(fileName: string): int =
     for x in sc:
         for g, i in galaxies.mpairs:
             if g.x > x:
-                i.x += 1
+                i.x += emptySpaceExpansionBase
     # expand inc row
     for y in sr:
         for g, i in galaxies.mpairs:
             if g.y > y:
-                i.y += 1
+                i.y += emptySpaceExpansionBase
     # echo "after-expands"
     # echo galaxies
 
+    return galaxies
+
+proc sumGalaxiesDistance(galaxies: Table[Coord, Coord]): int =
     var sumLength = 0
     let keys = galaxies.keys.toSeq()
     for i in 0 ..< len(keys) - 1:
@@ -174,3 +187,10 @@ proc day11*(fileName: string): int =
             sumLength += manhattanDistance(gi, gj)
 
     return sumLength
+
+proc day111*(fileName: string): int =
+    return sumGalaxiesDistance(readGalaxiesAndExpand(fileName))
+
+proc day112*(fileName: string, emptySpaceExpansionBase: int): int =
+    return sumGalaxiesDistance(readGalaxiesAndExpand(fileName, emptySpaceExpansionBase - 1))
+
