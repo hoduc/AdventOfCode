@@ -18,10 +18,11 @@ import AdventOfCode2023pkg/submodule
 # import AdventOfCode2023pkg/day8/day8
 # import AdventOfCode2023pkg/day9/day9
 # import AdventOfCode2023pkg/day10/day10
-import AdventOfCode2023pkg/day11/day11
+# import AdventOfCode2023pkg/day11/day11
 # import AdventOfCode2023pkg/day13/day13
 # import AdventOfCode2023pkg/day14/day14
-import AdventOfCode2023pkg/day16/day16
+import AdventOfCode2023pkg/day15/day15
+# import AdventOfCode2023pkg/day16/day16
 
 test "correct welcome":
   check getWelcomeMessage() == "Hello, World!"
@@ -96,14 +97,14 @@ test "correct welcome":
   # check day102("day10_sample6.txt") == 10
   # check day102("day10.txt") == 8
 
-test "day11":
-  check day111("day11_sample.txt") == 374
-  check day111("day11_sample2.txt") == 3
-  check day111("day11_sample3.txt") == 7
-  check day111("day11.txt") == 10422930
-  check day112("day11_sample.txt", 10) == 1030
-  check day112("day11_sample.txt", 100) == 8410
-  check day112("day11.txt", 1000000) == 699909023130
+# test "day11":
+#   check day111("day11_sample.txt") == 374
+#   check day111("day11_sample2.txt") == 3
+#   check day111("day11_sample3.txt") == 7
+#   check day111("day11.txt") == 10422930
+#   check day112("day11_sample.txt", 10) == 1030
+#   check day112("day11_sample.txt", 100) == 8410
+#   check day112("day11.txt", 1000000) == 699909023130
 
 # test "day13":
 #   check day13("day13_sample.txt") == 405
@@ -112,6 +113,10 @@ test "day11":
 # test "day14":
 #   check day14("day14_sample.txt") == 136 
 #   check day14("day14.txt") == 136
+
+test "day15":
+  check day15("day15_sample.txt") == 1320
+  check day15("day15.txt") == 517315
 
 
 # ======= measure time
