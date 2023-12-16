@@ -18,7 +18,7 @@ import AdventOfCode2023pkg/submodule
 # import AdventOfCode2023pkg/day8/day8
 # import AdventOfCode2023pkg/day9/day9
 # import AdventOfCode2023pkg/day10/day10
-# import AdventOfCode2023pkg/day11/day11
+import AdventOfCode2023pkg/day11/day11
 # import AdventOfCode2023pkg/day13/day13
 # import AdventOfCode2023pkg/day14/day14
 import AdventOfCode2023pkg/day16/day16
@@ -96,12 +96,11 @@ test "correct welcome":
   # check day102("day10_sample6.txt") == 10
   # check day102("day10.txt") == 8
 
-# test "day11":
-  # check day11("day11_sample.txt") == 374
-#   check day11("day11_sample2.txt") == 3
-#   check day11("day11_sample3.txt") == 7
-  # too high: 11614852
-  # check day11("day11.txt") == 374
+test "day11":
+  check day11("day11_sample.txt") == 374
+  check day11("day11_sample2.txt") == 3
+  check day11("day11_sample3.txt") == 7
+  check day11("day11.txt") == 10422930
 
 # test "day13":
 #   check day13("day13_sample.txt") == 405
