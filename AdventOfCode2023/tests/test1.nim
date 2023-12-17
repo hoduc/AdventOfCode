@@ -115,8 +115,10 @@ test "correct welcome":
 #   check day14("day14.txt") == 136
 
 test "day15":
-  check day15("day15_sample.txt") == 1320
-  check day15("day15.txt") == 517315
+  check day151("day15_sample.txt") == 1320
+  check day151("day15.txt") == 517315
+  check day152("day15_sample.txt") == 145
+  check day152("day15.txt") == 247763
 
 
 # ======= measure time
