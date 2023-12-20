@@ -19,10 +19,13 @@ import AdventOfCode2023pkg/submodule
 # import AdventOfCode2023pkg/day9/day9
 # import AdventOfCode2023pkg/day10/day10
 # import AdventOfCode2023pkg/day11/day11
-import AdventOfCode2023pkg/day13/day13
+# import AdventOfCode2023pkg/day13/day13
 # import AdventOfCode2023pkg/day14/day14
 # import AdventOfCode2023pkg/day15/day15
 # import AdventOfCode2023pkg/day16/day16
+# import AdventOfCode2023pkg/day17/day17
+# import AdventOfCode2023pkg/day18/day18
+import AdventOfCode2023pkg/day19/day19
 
 test "correct welcome":
   check getWelcomeMessage() == "Hello, World!"
@@ -106,11 +109,11 @@ test "correct welcome":
 #   check day112("day11_sample.txt", 100) == 8410
 #   check day112("day11.txt", 1000000) == 699909023130
 
-test "day13":
-  check day131("day13_sample.txt") == 405
-  check day131("day13.txt") == 34889
-  check day132("day13_sample.txt") == 400
-  check day132("day13.txt") == 34224
+# test "day13":
+#   check day131("day13_sample.txt") == 405
+#   check day131("day13.txt") == 34889
+#   check day132("day13_sample.txt") == 400
+#   check day132("day13.txt") == 34224
 
 # test "day14":
 #   check day14("day14_sample.txt") == 136 
@@ -140,3 +143,14 @@ test "day13":
 #   check day162("day16_sample.txt") == 51
 #   # TODO: fix runtime. This took : 68422 milliseconds
 #   check day162("day16.txt") == 7673
+
+# test "day17":
+#   check day17("day17_sample.txt") == 0
+
+# test "day18":
+  # check day18("day18_sample.txt") == 62
+  # check day18("day18.txt") == 62
+
+test "day19":
+  check day19("day19_sample.txt") == 19114
+  check day19("day19.txt") == 367602
