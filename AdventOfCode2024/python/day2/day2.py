@@ -37,6 +37,28 @@ So, in this example, 2 reports are safe.
 
 Analyze the unusual data from the engineers. How many reports are safe?
 
+--- Part Two ---
+
+The engineers are surprised by the low number of safe reports until they realize they forgot to tell you about the Problem Dampener.
+
+The Problem Dampener is a reactor-mounted module that lets the reactor safety systems tolerate a single bad level in what would otherwise be a safe report. It's like the bad level never happened!
+
+Now, the same rules apply as before, except if removing a single level from an unsafe report would make it safe, the report instead counts as safe.
+
+More of the above example's reports are now safe:
+
+    7 6 4 2 1: Safe without removing any level.
+    1 2 7 8 9: Unsafe regardless of which level is removed.
+    9 7 6 2 1: Unsafe regardless of which level is removed.
+    1 3 2 4 5: Safe by removing the second level, 3.
+    8 6 4 4 1: Safe by removing the third level, 4.
+    1 3 6 7 9: Safe without removing any level.
+
+Thanks to the Problem Dampener, 4 reports are actually safe!
+
+Update your analysis by handling situations where the Problem Dampener can remove a single level from unsafe reports. How many reports are now safe?
+
+
 """
 
 # assuming l1 occurs before l2
@@ -81,17 +103,44 @@ assert is_report_safe([1, 3, 2, 4, 5]) == False
 assert is_report_safe([8, 6, 4, 4, 1]) == False
 assert is_report_safe([1, 3, 6, 7, 9]) == True
 
-def part1(file_name):
+
+def part(is_report_safe_fn = is_report_safe):
     safe = 0
-    with open(file_name) as f:
+    with open('day2.txt') as f:
         for line in f:
             report = [int(l) for l in line.strip().split()]
-            report_safe = is_report_safe(report)
+            report_safe = is_report_safe_fn(report)
             # print(report, report_safe)
             if report_safe:
                 safe += 1
     return safe
 
-print(part1("day2.txt")) # 224
 
 
+def part1():
+    return part()
+
+
+def is_report_safe_dampener(report):
+    report_safe = is_report_safe(report)
+    remove_index = 0
+    while not report_safe and remove_index < len(report):
+        report_safe = is_report_safe(report[:remove_index] + report[remove_index + 1:])
+        remove_index += 1
+    return report_safe
+
+
+
+assert is_report_safe_dampener([7, 6, 4, 2, 1]) == True
+assert is_report_safe_dampener([1, 2, 7, 8, 9]) == False
+assert is_report_safe_dampener([9, 7, 6, 2, 1]) == False
+assert is_report_safe_dampener([1, 3, 2, 4, 5]) == True
+assert is_report_safe_dampener([8, 6, 4, 4, 1]) == True
+assert is_report_safe_dampener([1, 3, 6, 7, 9]) == True
+
+
+def part2():
+    return part(is_report_safe_dampener)
+
+print(part1())
+print(part2())
