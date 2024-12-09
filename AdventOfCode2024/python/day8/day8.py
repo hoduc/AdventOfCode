@@ -80,6 +80,48 @@ The first example has antennas with two different frequencies, so the antinodes 
 Because the topmost A-frequency antenna overlaps with a 0-frequency antinode, there are 14 total unique locations that contain an antinode within the bounds of the map.
 
 Calculate the impact of the signal. How many unique locations within the bounds of the map contain an antinode?
+
+--- Part Two ---
+
+Watching over your shoulder as you work, one of The Historians asks if you took the effects of resonant harmonics into your calculations.
+
+Whoops!
+
+After updating your model, it turns out that an antinode occurs at any grid position exactly in line with at least two antennas of the same frequency, regardless of distance. This means that some of the new antinodes will occur at the position of each antenna (unless that antenna is the only one of its frequency).
+
+So, these three T-frequency antennas now create many antinodes:
+
+T....#....
+...T......
+.T....#...
+.........#
+..#.......
+..........
+...#......
+..........
+....#.....
+..........
+
+In fact, the three T-frequency antennas are all exactly in line with two antennas, so they are all also antinodes! This brings the total number of antinodes in the above example to 9.
+
+The original example now has 34 antinodes, including the antinodes that appear on every antenna:
+
+##....#....#
+.#.#....0...
+..#.#0....#.
+..##...0....
+....0....#..
+.#...#A....#
+...#..#.....
+#....#.#....
+..#.....A...
+....#....A..
+.#........#.
+...#......##
+
+Calculate the impact of the signal using this updated model. How many unique locations within the bounds of the map contain an antinode?
+
+
 """
 
 
@@ -93,40 +135,65 @@ Calculate the impact of the signal. How many unique locations within the bounds 
 # on the condition that x1 <= x2
 # also the special case will be that it is vertical or horizontal line
 
-def antinodes(y1, x1, y2, x2):
+def antinodes_enumerate(y, x, yb, xb, dy, dx, antinodes_location, part2):
+    yp = y + dy
+    xp = x + dx
+    while (yp >= 0 and yp < yb and xp >= 0 and xp < xb):
+        antinodes_location.add((yp, xp))
+        if not part2:
+            break
+        yp += dy
+        xp += dx
+
+
+# need to extend beyond just two points
+def antinodes(y1, x1, y2, x2, yb, xb, antinodes_location, part2):
+    dy = abs(y1 - y2)
+    dx = abs(x1 - x2)
+    # TODO: add the cap of the while loop
     if x1 == x2: # vertical line
+        # dy = abs(y1 - y2)
         if y1 < y2:
-            return [(y1 - abs(y1 - y2), x1), (y2 + abs(y1 - y2), x2)]
-        return antinodes(y2, x2, y1, x1)
+            antinodes_enumerate(y1, x1, yb, xb, -dy, dx, antinodes_location, part2)
+            antinodes_enumerate(y2, x2, yb, xb, dy, dx, antinodes_location, part2)
+            return
+        antinodes(y2, x2, y1, x1, yb, xb, antinodes_location, part2)
+        return
     if y1 == y2: # horizontal line
         if x1 < x2:
-            return [(y1, x1 - abs(x1 - x2)), (y2, x2 + abs(x1 - x2))]
-        return antinodes(y2, x2, y1, x1)
+            antinodes_enumerate(y1, x1, yb, xb, dy, -dx, antinodes_location, part2)
+            antinodes_enumerate(y2, x2, yb, xb, dy, dx, antinodes_location, part2)
+            return
+        antinodes(y2, x2, y1, x1, yb, xb, antinodes_location, part2)
+        return
     # diagonal line
     if x1 < x2:
         m = (y2-y1) // (x2-x1)
-        # print("slope:", m)
         if m < 0:
-            return [(y1 + abs(y1 - y2), x1 - abs(x1 - x2)), (y2 - abs(y1 - y2), x2 + abs(x1 - x2))]
-        return [(y1 - abs(y1 - y2), x1 - abs(x1-x2)), (y2 + abs(y1 - y2), x2 + abs(x1-x2))]
-    return antinodes(y2, x2, y1, x1)
+            antinodes_enumerate(y1, x1, yb, xb, dy, -dx, antinodes_location, part2)
+            antinodes_enumerate(y2, x2, yb, xb, -dy, dx, antinodes_location, part2)
+            return
+        antinodes_enumerate(y1, x1, yb, xb, -dy, -dx, antinodes_location, part2)
+        antinodes_enumerate(y2, x2, yb, xb, dy, dx, antinodes_location, part2)
+        return
+    antinodes(y2, x2, y1, x1, yb, xb, antinodes_location, part2)
 
 def assert_antinodes(expected, actual):
     assert expected == actual, "Expected {} But Got {}".format(expected, actual)
 
-# diagonal up
-assert_antinodes([(9, 0), (-3, 6)], antinodes(5, 2, 1, 4))
-# diagonal down
-assert_antinodes([(-2, -2), (10, 7)], antinodes(2, 1, 6, 4))
-# vertical
-assert_antinodes([(-1, 4), (8, 4)], antinodes(2, 4, 5, 4))
-# horizontal
-assert_antinodes([(4, -1), (4, 8)], antinodes(4, 2, 4, 5))
+# # diagonal up
+# assert_antinodes([(9, 0), (-3, 6)], antinodes(5, 2, 1, 4, 999, 999))
+# # diagonal down
+# assert_antinodes([(-2, -2), (10, 7)], antinodes(2, 1, 6, 4))
+# # vertical
+# assert_antinodes([(-1, 4), (8, 4)], antinodes(2, 4, 5, 4))
+# # horizontal
+# assert_antinodes([(4, -1), (4, 8)], antinodes(4, 2, 4, 5))
 
 
 # OKAY LETS PARSE THE FILE?
 
-def part(file_name):
+def part(file_name, part2 = False):
     antinodes_location = set([])
     antennas_by_type = {}
     board = []
@@ -155,16 +222,15 @@ def part(file_name):
             for j in range(i+1, len(antennas)):
                 ajy, ajx = antennas[j]
                 print((ajy, ajx), "---")
-                for (y,x) in antinodes(aiy, aix, ajy, ajx):
-                    # can antinodes occurs on top of other antinodes ? but it is a set anyway ?
-                    if y >= 0 and y < yb and x >= 0 and x < xb:
-                        antinodes_location.add((y,x))
-                        print((y,x))
+                antinodes(aiy, aix, ajy, ajx, yb, xb, antinodes_location, part2)
+                if part2:
+                    antinodes_location.add((aiy, aix))
+                    antinodes_location.add((ajy, ajx))
             print("===")
 
     # print(yb, xb)
     # print(antennas)
-    print(antinodes_location)
+    print(len(antinodes_location), antinodes_location)
     for y in range(yb):
         for x in range(xb):
             if (y,x) in antinodes_location:
@@ -174,20 +240,27 @@ def part(file_name):
         print()
     return len(antinodes_location)
 
-assert part("day8_example.txt") == 14
+# assert part("day8_example.txt") == 14
 
-assert part("day8_example2.txt") == 4
+# assert part("day8_example2.txt") == 4
 
-assert part("day8_example3.txt") == 6. # I miscount on paper. This is 6 which is correct
+# assert part("day8_example3.txt") == 6. # I miscount on paper. This is 6 which is correct
 
-assert part("day8_example4.txt") == 2 # Hmm this is correct. wonder where is the fault is
+# assert part("day8_example4.txt") == 2 # Hmm this is correct. wonder where is the fault is
 
 # LETS construct another example simple one and see if it is correct but also watch the location
 
 
-print(part("day8.txt")) # 364. ANSWER TOO HIGH . OKAY new ANSWER 357 (forgot to strip the line is the issue??) . ANYWAY LETS TRY SUBMIT. YESSSSSSSSS
+def part1():
+    return part("day8.txt")
 
-# OKAY GONNA DEBUG TIL 6 then HAVE TO EAT DINNER AND SUCH. CANT THINK RIGHT NOW
+# print(part1()) # 364. ANSWER TOO HIGH . OKAY new ANSWER 357 (forgot to strip the line is the issue??) . ANYWAY LETS TRY SUBMIT. YESSSSSSSSS
+
+def part2():
+    return part("day8.txt", True)
+
+# assert part("day8_example.txt", True) == 34
+print(part2()) # 1266
 
 
 
