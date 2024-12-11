@@ -68,12 +68,77 @@ This larger example has 9 trailheads. Considering the trailheads in reading orde
 
 The reindeer gleefully carries over a protractor and adds it to the pile. What is the sum of the scores of all trailheads on your topographic map?
 
+--- Part Two ---
+
+The reindeer spends a few minutes reviewing your hiking trail map before realizing something, disappearing for a few minutes, and finally returning with yet another slightly-charred piece of paper.
+
+The paper describes a second way to measure a trailhead called its rating. A trailhead's rating is the number of distinct hiking trails which begin at that trailhead. For example:
+
+.....0.
+..4321.
+..5..2.
+..6543.
+..7..4.
+..8765.
+..9....
+
+The above map has a single trailhead; its rating is 3 because there are exactly three distinct hiking trails which begin at that position:
+
+.....0.   .....0.   .....0.
+..4321.   .....1.   .....1.
+..5....   .....2.   .....2.
+..6....   ..6543.   .....3.
+..7....   ..7....   .....4.
+..8....   ..8....   ..8765.
+..9....   ..9....   ..9....
+
+Here is a map containing a single trailhead with rating 13:
+
+..90..9
+...1.98
+...2..7
+6543456
+765.987
+876....
+987....
+
+This map contains a single trailhead with rating 227 (because there are 121 distinct hiking trails that lead to the 9 on the right edge and 106 that lead to the 9 on the bottom edge):
+
+012345
+123456
+234567
+345678
+4.6789
+56789.
+
+Here's the larger example from before:
+
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732
+
+Considering its trailheads in reading order, they have ratings of 20, 24, 10, 4, 1, 4, 5, 8, and 5. The sum of all trailhead ratings in this larger example topographic map is 81.
+
+You're not sure how, but the reindeer seems to have crafted some tiny flags out of toothpicks and bits of paper and is using them to mark trailheads on your topographic map. What is the sum of the ratings of all trailheads?
+
+
 """
 
 # LOOK LIKE JUST A DFS
 # BREAK TO READ THE PROBLEM AND SOCIAL MEDIA FOR 5 MINS
 
-def part(file_name):
+def part1_fn(rr):
+    return sum([r[0] for r in rr])
+
+def part2_fn(rr):
+    return sum([r[-1] for r in rr])
+
+def part(file_name, partFn = part1_fn):
     trail_starts = []
     m = []
     yb = 0
@@ -86,8 +151,8 @@ def part(file_name):
             m.append(line)
             xb = len(line)
             yb += 1
-    print(yb, xb)
-    print(trail_starts)    
+    # print(yb, xb)
+    # print(trail_starts)
 
     def in_bound(y, x):
         return y >= 0 and y < yb and x >= 0 and x < xb
@@ -105,6 +170,7 @@ def part(file_name):
 
     def dfs(trail):
         night_reachable = set([]) # night haha
+        rating = 0
         # print_map()
         # score = 0
         
@@ -125,6 +191,7 @@ def part(file_name):
                 # print_map(visited)
                 # TODO: prolly part 2 will need to cache but lateer
                 night_reachable.add((py,px))
+                rating += 1
                 continue
             # remember to cache the path
             # but for part1 might be okay unless they pull some thing
@@ -134,12 +201,19 @@ def part(file_name):
             add_to_q(py, px-1, ph, visited)
             add_to_q(py, px+1, ph, visited)
             # print(q)
-        return len(night_reachable)
+        return (len(night_reachable), rating)
     
-    return sum([dfs(t) for t in trail_starts])
+    return partFn([dfs(t) for t in trail_starts])
+
+
+
 
 assert part("day10_sample.txt") == 2
 assert part("day10_sample2.txt") == 4
 assert part("day10_sample3.txt") == 3
 assert part("day10_sample_larger.txt") == 36
-print(part("day10.txt"))
+print(part("day10.txt")) # 574
+
+assert part("day10_sample2.txt", part2_fn) == 13
+assert part("day10_sample_larger.txt", part2_fn) == 81
+print(part("day10.txt", part2_fn)) # 1238
